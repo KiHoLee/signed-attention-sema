@@ -192,16 +192,17 @@ def fig_weights():
         ends.append((beta, w[-1]))
     ax.axhline(0, color="k", lw=0.6, label="_guide")
     # one label per similarity, with a leader to each of its two curves (oracle LMMSE and proposed SC)
-    for (beta, _), xa, xt in zip(ends, [22, 17, 11], [23.5, 18, 12]):
+    for (beta, _), xa, xt in zip(ends, [12, 17, 22], [11, 16, 21]):
         rs = rows(f"snr_sweep_b{beta}.csv"); snr = col(rs, "snr"); rho = 10 ** (snr / 10); l1, l2 = L.eig_sym(4, beta)
         w = rho * (l1 - l2) * (1 - l1 * l2 * rho) / (4 * (1 + l1 ** 2 * rho) * (1 + l2 ** 2 * rho))
         for y in (float(np.interp(xa, snr, w)), float(np.interp(xa, snr, col(rs, "SC_offdiag_mean")))):
-            ax.annotate(f"$\\beta={beta}$", xy=(xa, y), xytext=(xt, 0.5), ha="center", va="center", fontsize=7,
-                        arrowprops=dict(arrowstyle="-", lw=0.7, color="0.35", shrinkB=2))
+            ax.plot(xa, y, marker="o", ms=4.5, mfc="white", mec="k", mew=0.8, ls="none", label="_guide", zorder=5)
+            ax.annotate(f"$\\beta={beta}$", xy=(xa, y), xytext=(xt, 0.45), ha="center", va="center", fontsize=7,
+                        arrowprops=dict(arrowstyle="-", lw=0.7, color="0.35", shrinkB=3))
     hb = [Line2D([], [], color=STY["SC"][1], ls=STY["SC"][3], marker=STY["SC"][2], label="Proposed SC"),
           Line2D([], [], color=STY["LMMSE"][1], ls=STY["LMMSE"][3], label="Oracle LMMSE")]
     ax.set_xlabel("per-user SNR (dB)"); ax.set_ylabel("weight $[\\mathbf{W}]_{uv}$")
-    ax.set_xlim(-6, 24); ax.set_ylim(-2.3, 0.7)
+    ax.set_xlim(-6, 24); ax.set_ylim(-2.3, 0.75)
     d = dict(framealpha=0.95, handlelength=1.6, labelspacing=0.22, handletextpad=0.4, borderpad=0.3,
              borderaxespad=0.2, loc="lower left")
     ax.legend(hb, [h.get_label() for h in hb], **d); ax._legend_spec = (hb, [h.get_label() for h in hb], d)
@@ -274,7 +275,7 @@ def fig_sigdesign():
     # the optimal correlation at five SNRs: a dot on the optimal curve, a dark leader, and the value
     for x, ha, dx, dy in [(-6, "left", 2, -16), (0, "center", 0, -36), (5, "left", 7, -16), (10, "center", 0, -36), (20, "center", 0, -16)]:
         k = int(np.argmin(np.abs(snr - x)))
-        ax.plot(snr[k], mopt[k], marker="o", ms=3.2, color="k", ls="none", label="_guide")
+        ax.plot(snr[k], mopt[k], marker="o", ms=4.5, mfc="white", mec="k", mew=0.8, ls="none", label="_guide", zorder=5)
         ax.annotate(f"$\\beta_{{\\rm s}}^\\star={bopt[k]:.2f}$", xy=(snr[k], mopt[k]), xytext=(dx, dy), textcoords="offset points",
                     ha=ha, va="top", fontsize=6.5, arrowprops=dict(arrowstyle="-", lw=0.7, color="0.35", shrinkB=2))
     ax.set_xlabel("per-user SNR (dB)"); ax.set_ylabel("per-user MSE")
