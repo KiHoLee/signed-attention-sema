@@ -271,10 +271,12 @@ def fig_sigdesign():
     ax.semilogy(snr, mopt, color="k", ls="-", label="optimal $\\beta_{\\rm s}^\\star$")
     ax.semilogy(snr, col(so, "mse_orth"), color=STY["OMAL"][1], ls="-.", label="OMA + LMMSE")
     ax.semilogy(snr, col(so, "mse_oma_wiener"), color=STY["OMA"][1], ls=":", label="OMA")
-    for x, ha in [(-6, "left"), (0, "center"), (5, "center"), (10, "center"), (20, "center")]:
+    # the optimal correlation at five SNRs: a dot on the optimal curve, a dark leader, and the value
+    for x, ha, dx in [(-6, "left", 2), (0, "left", 4), (5, "center", 0), (10, "center", 0), (20, "center", 0)]:
         k = int(np.argmin(np.abs(snr - x)))
-        ax.annotate(f"$\\beta_{{\\rm s}}^\\star={bopt[k]:.2f}$", xy=(snr[k], mopt[k]), xytext=(0, -14), textcoords="offset points",
-                    ha=ha, va="top", fontsize=6.5, arrowprops=dict(arrowstyle="-", lw=0.5, color="gray", shrinkB=1.5))
+        ax.plot(snr[k], mopt[k], marker="o", ms=3.2, color="k", ls="none", label="_guide")
+        ax.annotate(f"$\\beta_{{\\rm s}}^\\star={bopt[k]:.2f}$", xy=(snr[k], mopt[k]), xytext=(dx, -16), textcoords="offset points",
+                    ha=ha, va="top", fontsize=6.5, arrowprops=dict(arrowstyle="-", lw=0.7, color="0.35", shrinkB=2))
     ax.set_xlabel("per-user SNR (dB)"); ax.set_ylabel("per-user MSE")
     ax.set_xlim(-10, 30); ax.set_ylim(1e-3, 30)
     h, l = ax.get_legend_handles_labels()   # plot order: matched, optimal, OMA + LMMSE, OMA
