@@ -11,7 +11,7 @@ DATA = ROOT / "data"
 OUT = ROOT / "tables_gen.tex"
 
 LAB = {"SC": "SC", "SCh": "SC-g", "SCsgn": "SC-s", "SCsoft": "SC-soft", "ATT": "Attention", "TLC": "TLC", "LMMSE": "LMMSE",
-       "LMMSEe": "LMMSE-emp", "LMMSEg": "Genie LMMSE", "MOM": "Moment LMMSE", "SR": "SR", "MF": "MF",
+       "LMMSEe": "LMMSE-emp", "LMMSEg": "Pair oracle", "MOM": "Moment LMMSE", "SR": "SR", "MF": "MF",
        "OMA": "OMA", "OMAL": "OMA + LMMSE"}
 
 
@@ -73,7 +73,7 @@ def main():
     # ------------------------------------------------ scaling in U and d (one table)
     D = rows("scaling_d.csv"); Ur = rows("scaling_U.csv")
     L.append("% ---- Table: scaling (generated) ----")
-    L.append("\\begin{table}[!t]\n\\centering\n\\caption{Cosine Recovery Versus User Count ($d=64$) and SER and Cosine Recovery Versus Embedding Dimension ($U=4$) at $\\beta=0.64$, With SC$_{64}$ and SC$_{256}$ Trained at $d=64$ and $d=256$ and Applied Unchanged}\n\\label{tab:dim}\n\\scriptsize\n\\setlength{\\tabcolsep}{0.9pt}\n\\renewcommand{\\arraystretch}{1.0}")
+    L.append("\\begin{table}[!t]\n\\centering\n\\caption{Cosine Recovery Versus User Count ($d=64$) and SER Versus Embedding Dimension ($U=4$) at $\\beta=0.64$, With SC$_{64}$ and SC$_{256}$ Trained at $d=64$ and $d=256$ and Applied Unchanged}\n\\label{tab:dim}\n\\scriptsize\n\\setlength{\\tabcolsep}{0.9pt}\n\\renewcommand{\\arraystretch}{1.0}")
     cols = ["SC", "LMMSE", "MOM", "SR", "MF", "OMA"]
     L.append("\\begin{tabular}{l" + "c" * len(cols) + "}\n\\toprule")
     L.append(" & " + " & ".join(LAB[c] for c in cols) + " \\\\\n\\midrule")
@@ -87,9 +87,6 @@ def main():
     L.append("\\multicolumn{%d}{l}{\\emph{SER $(\\times10^{-4})$ at $0$~dB versus $d$}} \\\\" % (len(cols) + 1))
     for r in [x for x in D if x["snr"] == 0.0]:
         L.append(f"$d={int(r['d'])}$ & " + " & ".join(ser4(g(r, c, "ser")) for c in cols2) + " \\\\")
-    L.append("\\multicolumn{%d}{l}{\\emph{Cosine recovery at $10$~dB versus $d$}} \\\\" % (len(cols) + 1))
-    for r in [x for x in D if x["snr"] == 10.0]:
-        L.append(f"$d={int(r['d'])}$ & " + " & ".join(cs(g(r, c, "cos")) for c in cols2) + " \\\\")
     L.append("\\bottomrule\n\\end{tabular}\n\\end{table}\n")
     # ------------------------------------------------ real corpora
     S = json.load(open(DATA / "real_stats.json"))
