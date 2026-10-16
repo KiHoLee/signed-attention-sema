@@ -272,7 +272,7 @@ def fig_sigdesign():
     ax.semilogy(snr, col(so, "mse_orth"), color=STY["OMAL"][1], ls="-.", label="OMA + LMMSE")
     ax.semilogy(snr, col(so, "mse_oma_wiener"), color=STY["OMA"][1], ls=":", label="OMA")
     # the optimal correlation at five SNRs: a dot on the optimal curve, a dark leader, and the value
-    for x, ha, dx in [(-6, "left", 2), (0, "left", 4), (5, "center", 0), (10, "center", 0), (20, "center", 0)]:
+    for x, ha, dx in [(-6, "left", 2), (0, "right", -5), (5, "left", 6), (10, "center", 0), (20, "center", 0)]:
         k = int(np.argmin(np.abs(snr - x)))
         ax.plot(snr[k], mopt[k], marker="o", ms=3.2, color="k", ls="none", label="_guide")
         ax.annotate(f"$\\beta_{{\\rm s}}^\\star={bopt[k]:.2f}$", xy=(snr[k], mopt[k]), xytext=(dx, -16), textcoords="offset points",
