@@ -272,10 +272,10 @@ def fig_sigdesign():
     ax.semilogy(snr, col(so, "mse_orth"), color=STY["OMAL"][1], ls="-.", label="OMA + LMMSE")
     ax.semilogy(snr, col(so, "mse_oma_wiener"), color=STY["OMA"][1], ls=":", label="OMA")
     # the optimal correlation at five SNRs: a dot on the optimal curve, a dark leader, and the value
-    for x, ha, dx in [(-6, "left", 2), (0, "right", -5), (5, "left", 6), (10, "center", 0), (20, "center", 0)]:
+    for x, ha, dx, dy in [(-6, "left", 2, -16), (0, "center", 0, -36), (5, "left", 7, -16), (10, "center", 0, -36), (20, "center", 0, -16)]:
         k = int(np.argmin(np.abs(snr - x)))
         ax.plot(snr[k], mopt[k], marker="o", ms=3.2, color="k", ls="none", label="_guide")
-        ax.annotate(f"$\\beta_{{\\rm s}}^\\star={bopt[k]:.2f}$", xy=(snr[k], mopt[k]), xytext=(dx, -16), textcoords="offset points",
+        ax.annotate(f"$\\beta_{{\\rm s}}^\\star={bopt[k]:.2f}$", xy=(snr[k], mopt[k]), xytext=(dx, dy), textcoords="offset points",
                     ha=ha, va="top", fontsize=6.5, arrowprops=dict(arrowstyle="-", lw=0.7, color="0.35", shrinkB=2))
     ax.set_xlabel("per-user SNR (dB)"); ax.set_ylabel("per-user MSE")
     ax.set_xlim(-10, 30); ax.set_ylim(1e-3, 30)
