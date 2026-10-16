@@ -57,8 +57,7 @@ def main():
     c0 = ["SC", "SCh", "SCsgn", "TLC", "LMMSE", "LMMSEg", "MOM", "MF", "OMA"]
     c1 = ["SC", "TLC", "LMMSE", "MF", "OMA"]
     names = [("sym", "Symmetric"), ("asym", "Asymmetric"), ("nearfar", "Near-far"),
-             ("twoclust", "Two scenes"), ("negcorr", "Negative correlation"),
-             ("indep", "Independent")]
+             ("twoclust", "Two scenes"), ("negcorr", "Negative correlation")]
     L.append("% ---- Table: profiles (generated) ----")
     L.append("\\begin{table*}[!t]\n\\centering\n\\caption{SER at $0$~dB and Cosine Recovery at $10$~dB Under Heterogeneous, Out-of-Distribution, and Block-Varying Similarity Profiles ($U=4$, $d=64$). The Block-Varying Rows Report Both Metrics at the Stated SNR}\n\\label{tab:profiles}\n\\scriptsize\n\\setlength{\\tabcolsep}{2.2pt}\n\\renewcommand{\\arraystretch}{1.0}")
     L.append("\\begin{tabular}{l" + "c" * (len(c0) + len(c1)) + "}\n\\toprule")
@@ -80,7 +79,7 @@ def main():
     L.append(" & " + " & ".join(LAB[c] for c in cols) + " \\\\\n\\midrule")
     for snr in [0.0, 10.0]:
         L.append("\\multicolumn{%d}{l}{\\emph{Cosine recovery versus $U$ at $%d$~dB}} \\\\" % (len(cols) + 1, int(snr)))
-        for r in [x for x in Ur if x["snr"] == snr]:
+        for r in [x for x in Ur if x["snr"] == snr and int(x["U"]) in (2, 4, 6, 8)]:
             L.append(f"$U={int(r['U'])}$ & " + " & ".join(cs(g(r, c, "cos")) for c in cols) + " \\\\")
     cols2 = ["SC", "SC256", "LMMSE", "MOM", "MF", "OMA"]
     lab = {"SC": "SC$_{64}$", "SC256": "SC$_{256}$"}

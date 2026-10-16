@@ -30,12 +30,15 @@ import sema_lib as L
 from suite import *
 
 U, d = 4, 64
-REP = 5 if QUICK else 100          # channel draws per group (2000 groups -> 2e5 blocks)
-SNRS = list(range(-4, 21, 2))
+REP = 5 if QUICK else int(os.environ.get("SEMA_REP", "100"))   # channel draws per group (2000 groups -> 2e5 blocks)
+SNRS = [int(x) for x in os.environ["SEMA_SNRS"].split(",")] if os.environ.get("SEMA_SNRS") else list(range(-4, 21, 2))
+SUFFIX = os.environ.get("SEMA_SUFFIX", "")   # rerun of the main corpus only, written to real_*{SUFFIX}.csv
 WHICH = ["SC", "SCsoft", "ATT", "TLC", "LMMSE", "MOM", "SR", "MF", "OMA", "OMAL"]
 REAL = DATA / "real"
 CORPORA = [("ag_news", "bert-base-uncased"), ("sst2", "bert-base-uncased"),
            ("ag_news", "distilbert-base-uncased")]
+if SUFFIX:
+    CORPORA = CORPORA[:1]
 
 
 def load_corpus(corpus, model):
@@ -103,7 +106,7 @@ def evaluate(Ztr, Zte, ytr, yte, n_classes, grp_sup, grp_eval, Bsig, snr, models
     acc = {}
     yg = yte[grp_eval]                            # (n,U)
     n = len(grp_eval)
-    chunk = 2000
+    chunk = int(os.environ.get("SEMA_EVAL_CHUNK", "2000"))
     for r in range(REP):
         for i in range(0, n, chunk):
             E = Zte[grp_eval[i:i + chunk]]
@@ -173,10 +176,10 @@ def main():
             rows.append(row)
             print(f"[{key} {snr:3d} dB] " + " ".join(f"{m}:{res[m]['ser']:.2e}" for m in WHICH + ["LMMSEe"])
                   + f" acc SC {res['SC']['acc']:.3f} OMA {res['OMA']['acc']:.3f} ({time.time()-t0:.0f}s)", flush=True)
-        with open(DATA / f"real_{key}_snr.csv", "w", newline="") as f:
+        with open(DATA / f"real_{key}_snr{SUFFIX}.csv", "w", newline="") as f:
             w = csv.DictWriter(f, fieldnames=list(rows[0].keys())); w.writeheader(); w.writerows(rows)
 
-        if corpus == "ag_news" and model == "bert-base-uncased":
+        if corpus == "ag_news" and model == "bert-base-uncased" and not SUFFIX:
             # independent groups (no correlation): signatures orthogonal (beta = 0)
             grp_ind = random_groups(Zte, n_eval, g)
             grp_sup_i = random_groups(Ztr, n_sup, g)
@@ -216,7 +219,7 @@ def main():
                     print(f"[tau {snr} dB {tt:.2f}] " + " ".join(f"{m}:{res[m]['ser']:.2e}" for m in WHICH), flush=True)
             with open(DATA / "real_tau.csv", "w", newline="") as f:
                 w = csv.DictWriter(f, fieldnames=list(rows[0].keys())); w.writeheader(); w.writerows(rows)
-    json.dump(stats, open(DATA / "real_stats.json", "w"), indent=1)
+    json.dump(stats, open(DATA / f"real_stats{SUFFIX}.json", "w"), indent=1)
     print(f"done ({time.time()-t0:.0f}s)")
 
 

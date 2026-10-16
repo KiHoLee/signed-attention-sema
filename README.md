@@ -36,6 +36,7 @@ Simulation code, result data, and figures for
 | Table IV user count and dimension | `exp5_scaling.py` | `scaling_U.csv`, `scaling_d.csv` | |
 | Text: Haar-mask floor, mismatch, complexity | `exp7_misc.py` | `haar_masks.csv`, `mismatch.csv`, `complexity.json` | |
 | Text: seed spread, decorrelation penalty | `exp9_seeds.py` | `seeds.csv` | |
+| Floor points of Figs. 5, 7, 8 at 10x blocks (merged into the base files) | `run_floor.sh`, `merge_floor.py` | `*_floor.csv` | |
 | Text: receiver design study | `exp_variants.py` | `variants*.json` | |
 | Trained receivers | `exp_train.py` | `ckpt/*.pt` | |
 

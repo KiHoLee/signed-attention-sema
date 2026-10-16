@@ -5,7 +5,7 @@ mean off-diagonal weight of the SC receiver and of the LMMSE receiver.
 Output: data/beta_sweep_{snr}dB.csv
 """
 from __future__ import annotations
-import csv, math, sys, time
+import csv, math, os, sys, time
 from pathlib import Path
 import numpy as np
 import torch
@@ -14,13 +14,15 @@ import sema_lib as L
 from suite import *
 
 U, d = 4, 64
-N = n_blocks(200_000); CHUNK = min(25_000, N)
-BETAS = np.round(np.arange(0.0, 0.91, 0.05), 2)
+N = n_blocks(int(os.environ.get("SEMA_N", "200000"))); CHUNK = min(int(os.environ.get("SEMA_CHUNK", "25000")), N)
+BETAS = [float(x) for x in os.environ["SEMA_BETAS"].split(",")] if os.environ.get("SEMA_BETAS") else list(np.round(np.arange(0.0, 0.91, 0.05), 2))
+SNRS = [float(x) for x in os.environ["SEMA_SNRS"].split(",")] if os.environ.get("SEMA_SNRS") else [0.0, 10.0]
+SUFFIX = os.environ.get("SEMA_SUFFIX", "")
 
 
 def main():
     models = dict(SC=load_sc(U), SCsoft=load_sc(U, softmax=True), ATT=load_att(U))
-    for snr in [0.0, 10.0]:
+    for snr in SNRS:
         g = L.gen(1000 + int(snr))
         # TLC on the mixed training distribution at this SNR
         def data_fn(batch, gg, snr=snr):
@@ -50,7 +52,7 @@ def main():
             print(f"[{snr:.0f} dB] beta {beta:.2f} " + " ".join(f"{m}:{res[m]['ser']:.2e}" for m in ORDER)
                   + f"  Wsc {res['_extra']['SC_offdiag_mean']:+.3f} Wl {res['_extra']['LMMSE_offdiag_mean']:+.3f}"
                   + f" ({time.time()-t0:.0f}s)", flush=True)
-        with open(DATA / f"beta_sweep_{snr:.0f}dB.csv", "w", newline="") as f:
+        with open(DATA / f"beta_sweep_{snr:.0f}dB{SUFFIX}.csv", "w", newline="") as f:
             w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
             w.writeheader(); w.writerows(rows)
 
