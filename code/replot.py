@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import sema_lib as L
 
@@ -30,16 +31,16 @@ AXES_RECT = dict(left=0.19, right=0.965, top=0.965, bottom=0.17)
 # label, color, marker, linestyle  (one triple per scheme, every figure)
 STY = {
     "SC":     ("Proposed SC",          "#c0392b", "o", "-"),
-    "SCsoft": ("SC, softmax weights",  "#e67e22", "h", "--"),
-    "SCh":    ("SC, gain conditioned", "#a93226", "8", "-"),
-    "SCsgn":  ("SC, signed training",  "#922b21", "*", "-"),
+    "SCsoft": ("softmax SC",  "#e67e22", "h", "--"),
+    "SCh":    ("SC-g", "#a93226", "8", "-"),
+    "SCsgn":  ("SC-s",  "#922b21", "*", "-"),
     "ATT":    ("Attention receiver",   "#d35400", "p", "--"),
     "TLC":    ("TLC",                  "#8e44ad", "P", "--"),
     "LMMSE":  ("Informed LMMSE",       "#16a085", "v", "-."),
     "MOM":    ("Moment LMMSE",         "#0e6655", "<", ":"),
-    "LMMSEe": ("Informed LMMSE, emp.", "#1abc9c", ">", "-."),
+    "LMMSEe": ("empirical LMMSE", "#1abc9c", ">", "-."),
     "SR":     ("SR",                   "#2c5fa8", "s", "--"),
-    "MF":     ("Matched filter",       "#7d6608", "X", ":"),
+    "MF":     ("MF",       "#7d6608", "X", ":"),
     "OMA":    ("OMA",                  "#7f8c8d", "^", ":"),
     "OMAL":   ("OMA + LMMSE",          "#566573", "d", ":"),
     "cf_lmmse": ("LMMSE, closed form", "#16a085", "", "-"),
@@ -265,7 +266,9 @@ def fig_sigdesign():
 def fig_real(metric="ser"):
     rs = rows("real_ag_news_bert-base-uncased_snr.csv")
     snr = col(rs, "snr")
-    fig, ax = plt.subplots()
+    W, H = 3.3, 2.5
+    fig, ax = plt.subplots(figsize=(W, H))
+    fig.subplots_adjust(left=0.62 / W, right=1 - 0.1 / W, top=0.98, bottom=1.08 / H)
     keys = ["SC", "SCsoft", "ATT", "TLC", "LMMSEe", "LMMSE", "MOM", "SR", "MF", "OMA", "OMAL"]
     for k in keys:
         if f"{metric}_{k}" not in rs[0]:
@@ -277,11 +280,12 @@ def fig_real(metric="ser"):
             plot(ax, snr, y, k)
     ax.set_xlabel("per-user SNR (dB)")
     if metric == "ser":
-        ax.set_ylabel("SER"); ax.set_ylim(1e-6, 400); legend(ax, loc="upper right", ncol=3, fontsize=5.2, columnspacing=0.6, handlelength=1.3)
+        ax.set_ylabel("SER"); ax.set_ylim(1e-6, 1.5)
     else:
-        ax.set_ylabel("topic accuracy"); ax.set_ylim(0.2, 1.0); legend(ax, loc="lower right", ncol=2)
+        ax.set_ylabel("topic accuracy"); ax.set_ylim(0.2, 1.0)
     ax.set_xlim(-4, 20)
-    save(fig, "fig_real" if metric == "ser" else f"fig_real_{metric}")
+    # eleven schemes do not fit inside a column-width axes: shared legend below the axes
+    _shared_legend(fig, [ax], "fig_real" if metric == "ser" else f"fig_real_{metric}", 2, fs=6.0)
 
 
 ALL = {"theory": fig_theory, "weights": fig_weights,
@@ -291,17 +295,17 @@ ALL = {"theory": fig_theory, "weights": fig_weights,
        "real_ser": lambda: fig_real("ser"), "real_acc": lambda: fig_real("acc")}
 
 # ------------------------------------------------------ multi-panel figures
-PANEL_W, PANEL_H = 2.4, 1.6
+PANEL_W, PANEL_H = 2.4, 1.5
 
 
 def _panel_axes(n):
     W = n * PANEL_W + 0.3
     fig, axs = plt.subplots(1, n, figsize=(W, PANEL_H + 0.75))
-    fig.subplots_adjust(left=0.62 / W, right=1 - 0.1 / W, top=0.96, bottom=0.36, wspace=0.55)
+    fig.subplots_adjust(left=0.62 / W, right=1 - 0.1 / W, top=0.96, bottom=0.85 / (PANEL_H + 0.75), wspace=0.55)
     return fig, (list(axs) if n > 1 else [axs])
 
 
-def _shared_legend(fig, axs, name, ncol):
+def _shared_legend(fig, axs, name, ncol, fs=6.4):
     """One legend below the panels in ORDER, outside every axes box."""
     hs, ls = [], []
     for ax in axs:
@@ -313,7 +317,7 @@ def _shared_legend(fig, axs, name, ncol):
     idx = sorted(range(len(ls)), key=lambda i: rank.get(ls[i], 99))
     fig.legend([hs[i] for i in idx], [ls[i] for i in idx], loc="lower center", ncol=ncol,
                frameon=True, framealpha=0.95, handlelength=1.6, labelspacing=0.25,
-               handletextpad=0.4, columnspacing=1.0, borderaxespad=0.1, fontsize=6.4)
+               handletextpad=0.4, columnspacing=1.0, borderaxespad=0.1, fontsize=fs)
     fig.canvas.draw()
     r = fig.canvas.get_renderer(); F = fig.bbox
     for ax in axs:
@@ -327,6 +331,8 @@ def _shared_legend(fig, axs, name, ncol):
                 raise RuntimeError(f"{name}: legend leaves the canvas")
             if Lb.overlaps(ax.get_window_extent(r)):
                 raise RuntimeError(f"{name}: legend overlaps an axes box")
+            if Lb.overlaps(ax.xaxis.label.get_window_extent(r)):
+                raise RuntimeError(f"{name}: legend overlaps the x label")
     fig.savefig(FIG / f"{name}.pdf"); plt.close(fig); print("[OK]", name)
 
 
@@ -385,34 +391,43 @@ def fig_analysis_combo():
                      ("mc_omal", "d", STY["OMAL"][1]), ("mc_oma", "^", STY["OMA"][1])]:
         ax.semilogy(snr[::2], col(rs, k)[::2], ls="none", marker=mk, color=c, markerfacecolor="none", label="_nolegend_")
     ax.semilogy([], [], ls="none", marker="o", color="k", markerfacecolor="none", label="Monte Carlo")
-    ax.set_xlabel("per-user SNR (dB)\n(a)"); ax.set_ylabel("per-user MSE"); ax.set_xlim(-10, 30); ax.set_ylim(1e-3, 3e2)
+    ax.set_xlabel("per-user SNR (dB)\n(a)"); ax.set_ylabel("per-user MSE"); ax.set_xlim(-10, 30); ax.set_ylim(1e-3, 2e3)
     # (b)
     ax = axs[1]
     for beta, ls in [(0.3, ":"), (0.64, "-"), (0.9, "--")]:
         rb = rows(f"snr_sweep_b{beta}.csv"); sb = col(rb, "snr"); rho = 10 ** (sb / 10)
         l1, l2 = L.eig_sym(4, beta)
         w = rho * (l1 - l2) * (1 - l1 * l2 * rho) / (4 * (1 + l1 ** 2 * rho) * (1 + l2 ** 2 * rho))
-        ax.plot(sb, w, color=STY["LMMSE"][1], ls=ls, label=f"Informed LMMSE, $\\beta={beta}$")
-        ax.plot(sb, col(rb, "SC_offdiag_mean"), color=STY["SC"][1], ls=ls, marker="o", markevery=2, label=f"Proposed SC, $\\beta={beta}$")
+        ax.plot(sb, w, color=STY["LMMSE"][1], ls=ls, label=f"_lmmse{beta}")
+        ax.plot(sb, col(rb, "SC_offdiag_mean"), color=STY["SC"][1], ls=ls, marker="o", markevery=2, label=f"_sc{beta}")
         ax.axvline(L.snr_boundary_sym(4, beta), color="gray", lw=0.6, ls=ls, label="_guide")
     ax.axhline(0, color="k", lw=0.6, label="_guide")
+    # compact legend: scheme by color, beta by line style (two short columns fit inside the axes)
+    hb = [Line2D([], [], color=STY["SC"][1], ls="-", marker="o", label="Proposed SC"),
+          Line2D([], [], color=STY["LMMSE"][1], ls="-", label="Informed LMMSE"),
+          Line2D([], [], color="k", ls=":", label="$\\beta=0.3$"),
+          Line2D([], [], color="k", ls="-", label="$\\beta=0.64$"),
+          Line2D([], [], color="k", ls="--", label="$\\beta=0.9$")]
     ax.set_xlabel("per-user SNR (dB)\n(b)"); ax.set_ylabel("weight $[\\mathbf{W}]_{uv}$"); ax.set_xlim(-6, 24); ax.set_ylim(-2.9, 0.7)
     # (c)
     ax = axs[2]; so = rows("sigopt.csv"); s2 = col(so, "snr")
     ax.semilogy(s2, col(so, "mse_matched"), color=STY["LMMSE"][1], ls="-", label="matched, $\\beta_{\\rm s}=\\beta$")
-    ax.semilogy(s2, col(so, "mse_opt"), color="#c0392b", ls="-", label="optimal $\\beta_{\\rm s}^\\star$")
+    ax.semilogy(s2, col(so, "mse_opt"), color="k", ls="-", label="optimal $\\beta_{\\rm s}^\\star$")
     ax.semilogy(s2, col(so, "mse_orth"), color=STY["OMAL"][1], ls="-.", label="OMA + LMMSE")
     ax.semilogy(s2, col(so, "mse_oma_wiener"), color=STY["OMA"][1], ls=":", label="OMA")
-    ax2 = ax.twinx(); ax2.plot(s2, col(so, "beta_s_opt"), color="#c0392b", ls="--", lw=0.9, label="$\\beta_{\\rm s}^\\star$ (right axis)")
+    ax2 = ax.twinx(); ax2.plot(s2, col(so, "beta_s_opt"), color="k", ls="--", lw=0.9, label="$\\beta_{\\rm s}^\\star$, right axis")
     ax2.set_ylim(0, 1.05); ax2.set_ylabel("$\\beta_{\\rm s}^\\star$"); ax2.grid(False)
     ax.set_xlabel("per-user SNR (dB)\n(c)"); ax.set_ylabel("per-user MSE"); ax.set_xlim(-10, 30); ax.set_ylim(1e-3, 30)
     # legends: (a) and (c) in the empty upper-right corner, (b) lower left; each checked by the guard
     legend(axs[0], loc="upper right", fontsize=5.6)
-    legend(axs[1], loc="lower center", fontsize=5.2, ncol=2, columnspacing=0.6, handlelength=1.3)
+    db = dict(fontsize=5.4, framealpha=0.95, handlelength=1.5, labelspacing=0.22, handletextpad=0.4,
+              borderpad=0.3, borderaxespad=0.2, columnspacing=0.7, ncol=2, loc="lower left")
+    axs[1].legend(hb, [h.get_label() for h in hb], **db)
+    axs[1]._legend_spec = (hb, [h.get_label() for h in hb], db)
     h1, l1_ = ax.get_legend_handles_labels(); h2, l2_ = ax2.get_legend_handles_labels()
     ax.legend(h1 + h2, l1_ + l2_, loc="upper right", fontsize=5.6, framealpha=0.95, handlelength=1.6, labelspacing=0.22)
     ax._legend_spec = (h1 + h2, l1_ + l2_, dict(fontsize=5.6, framealpha=0.95, handlelength=1.6, labelspacing=0.22, loc="upper right"))
-    fig.subplots_adjust(left=0.62 / (3 * PANEL_W + 0.3), right=1 - 0.75 / (3 * PANEL_W + 0.3), top=0.96, bottom=0.26, wspace=0.62)
+    fig.subplots_adjust(left=0.62 / (3 * PANEL_W + 0.3), right=1 - 0.75 / (3 * PANEL_W + 0.3), top=0.96, bottom=0.6 / (PANEL_H + 0.75), wspace=0.62)
     name = "fig_analysis"
     fig.canvas.draw(); r = fig.canvas.get_renderer(); F = fig.bbox
     for a_ in axs + [ax2]:
@@ -423,13 +438,16 @@ def fig_analysis_combo():
     for a_ in axs:
         lg = a_.get_legend(); spec = getattr(a_, "_legend_spec", None)
         hit = _overlaps(a_, lg.get_window_extent(r).expanded(1.03, 1.06), r)
+        if hit is None and not a_.bbox.contains(*lg.get_window_extent(r).p0) or hit is None and not a_.bbox.contains(*lg.get_window_extent(r).p1):
+            hit = "legend outside axes"
         if hit:
             hh, ll, d = spec; placed = False
             for fs in [5.6, 5.2, 4.8]:
                 for loc in LOCS:
                     dd = dict(d); dd["loc"] = loc; dd["fontsize"] = fs
                     lg = a_.legend(hh, ll, **dd); fig.canvas.draw()
-                    if _overlaps(a_, lg.get_window_extent(r).expanded(1.03, 1.06), r) is None:
+                    bb = lg.get_window_extent(r)
+                    if _overlaps(a_, bb.expanded(1.03, 1.06), r) is None and a_.bbox.contains(*bb.p0) and a_.bbox.contains(*bb.p1):
                         placed = True; break
                 if placed: break
             if not placed:

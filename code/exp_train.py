@@ -10,7 +10,7 @@ checkpoints in data/ckpt/. One run per line of RUNS; `python exp_train.py
   att_U4_d64_s1           projection-based attention receiver
   gramsc_U4_d64_s1_h      variant that also reads the front-end gains
   gramsc_U4_d64_s1_sgn    variant trained with signed share coefficients
-Training: Adam, cosine-annealed lr, batch 256, 6,000 iterations, mixed
+Training: Adam, cosine-annealed lr, batch 256, 20,000 iterations, mixed
 similarity profiles, SNR drawn from {0,2,...,24} dB, Rayleigh gains,
 exact signature front end. Loss: mean cosine distortion.
 """

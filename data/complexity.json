@@ -2,7 +2,7 @@
  "params_SC": 6544,
  "params_SCsoft": 6544,
  "params_ATT": 25089,
- "macs_SC": 8192,
+ "macs_SC": 8592,
  "macs_SR_apply": 1024,
  "macs_LMMSE_apply": 1024,
  "macs_linear_matrix": 64,

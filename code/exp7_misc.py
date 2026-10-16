@@ -100,7 +100,7 @@ def main():
     # ---------- (c) complexity ----------
     soft = load_sc(U, softmax=True); att = load_att(U)
     hid = L.CFG["hidden"]
-    macs_sc = U * U * d + (U * U * hid + hid * hid + hid * U * U) + U * U * d
+    macs_sc = U * U * d + L.n_params(sc) + U * U * d  # Gram, one per network parameter, combination
     comp = dict(params_SC=L.n_params(sc), params_SCsoft=L.n_params(soft), params_ATT=L.n_params(att),
                 macs_SC=macs_sc, macs_SR_apply=U * U * d, macs_LMMSE_apply=U * U * d,
                 macs_linear_matrix=U ** 3)

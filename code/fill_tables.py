@@ -60,7 +60,7 @@ def main():
              ("both", "Asymmetric, near-far"), ("twoclust", "Two scenes"), ("negcorr", "Negative correlation"),
              ("indep", "Independent")]
     L.append("% ---- Table: profiles (generated) ----")
-    L.append("\\begin{table*}[!t]\n\\centering\n\\caption{SER at $0$~dB and Cosine Recovery at $10$~dB Under Heterogeneous, Out-of-Distribution, and Block-Varying Similarity Profiles ($U=4$, $d=64$). The Block-Varying Rows Report Both Metrics at the Stated SNR, and a Dash Marks a Scheme Not Run on That Profile}\n\\label{tab:profiles}\n\\scriptsize\n\\setlength{\\tabcolsep}{2.2pt}\n\\renewcommand{\\arraystretch}{1.05}")
+    L.append("\\begin{table*}[!t]\n\\centering\n\\caption{SER at $0$~dB and Cosine Recovery at $10$~dB Under Heterogeneous, Out-of-Distribution, and Block-Varying Similarity Profiles ($U=4$, $d=64$). The Block-Varying Rows Report Both Metrics at the Stated SNR}\n\\label{tab:profiles}\n\\scriptsize\n\\setlength{\\tabcolsep}{2.2pt}\n\\renewcommand{\\arraystretch}{1.0}")
     L.append("\\begin{tabular}{l" + "c" * (len(c0) + len(c1)) + "}\n\\toprule")
     L.append(" & \\multicolumn{%d}{c}{SER $(\\times10^{-4})$ at $0$~dB} & \\multicolumn{%d}{c}{Cosine recovery at $10$~dB} \\\\" % (len(c0), len(c1)))
     L.append("\\cmidrule(lr){2-%d}\\cmidrule(lr){%d-%d}" % (len(c0) + 1, len(c0) + 2, len(c0) + len(c1) + 1))
@@ -74,7 +74,7 @@ def main():
     # ------------------------------------------------ scaling in U and d (one table)
     D = rows("scaling_d.csv"); Ur = rows("scaling_U.csv")
     L.append("% ---- Table: scaling (generated) ----")
-    L.append("\\begin{table}[!t]\n\\centering\n\\caption{Cosine Recovery Versus User Count ($d=64$) and SER and Cosine Recovery Versus Embedding Dimension ($U=4$) at $\\beta=0.64$. SC$_{64}$ and SC$_{256}$ Are Trained at $d=64$ and $d=256$ and Applied Unchanged}\n\\label{tab:dim}\n\\scriptsize\n\\setlength{\\tabcolsep}{0.9pt}\n\\renewcommand{\\arraystretch}{1.05}")
+    L.append("\\begin{table}[!t]\n\\centering\n\\caption{Cosine Recovery Versus User Count ($d=64$) and SER and Cosine Recovery Versus Embedding Dimension ($U=4$) at $\\beta=0.64$. SC$_{64}$ and SC$_{256}$ Are Trained at $d=64$ and $d=256$ and Applied Unchanged}\n\\label{tab:dim}\n\\scriptsize\n\\setlength{\\tabcolsep}{0.9pt}\n\\renewcommand{\\arraystretch}{1.0}")
     cols = ["SC", "LMMSE", "MOM", "SR", "MF", "OMA"]
     L.append("\\begin{tabular}{l" + "c" * len(cols) + "}\n\\toprule")
     L.append(" & " + " & ".join(LAB[c] for c in cols) + " \\\\\n\\midrule")
@@ -98,7 +98,7 @@ def main():
             ("ag_news_distilbert-base-uncased", "AG News, DistilBERT")]
     cols = ["SC", "LMMSE", "LMMSEe", "MOM", "SR", "MF", "OMA"]
     L.append("% ---- Table: real corpora (generated) ----")
-    L.append("\\begin{table*}[!t]\n\\centering\n\\caption{SER and Classification Accuracy at $0$ and $10$~dB on Real Embedding Groups With Their Group Statistics ($U=4$, $d=64$)}\n\\label{tab:real}\n\\footnotesize\n\\setlength{\\tabcolsep}{5pt}\n\\renewcommand{\\arraystretch}{1.05}")
+    L.append("\\begin{table*}[!t]\n\\centering\n\\caption{SER and Classification Accuracy at $0$ and $10$~dB on Real Embedding Groups With Their Group Statistics ($U=4$, $d=64$)}\n\\label{tab:real}\n\\scriptsize\n\\setlength{\\tabcolsep}{4pt}\n\\renewcommand{\\arraystretch}{1.0}")
     L.append("\\begin{tabular}{l" + "c" * len(cols) + "}\n\\toprule")
     L.append(" & " + " & ".join(LAB[c] for c in cols) + " \\\\")
     for key, nm in corp:
