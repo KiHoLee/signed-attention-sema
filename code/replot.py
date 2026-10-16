@@ -261,23 +261,25 @@ def fig_scaling_U():
 
 
 def fig_sigdesign():
+    """One axis: LMMSE error of the four signature designs; the optimal
+    correlation beta_s* is written along its own curve at a few SNRs."""
     so = rows("sigopt.csv")
-    snr = col(so, "snr")
+    snr = col(so, "snr"); bopt = col(so, "beta_s_opt"); mopt = col(so, "mse_opt")
     fig, ax = plt.subplots()
     ax.semilogy(snr, col(so, "mse_matched"), color=STY["LMMSE"][1], ls="-", label="matched, $\\beta_{\\rm s}=\\beta$")
-    ax.semilogy(snr, col(so, "mse_opt"), color="k", ls="-", label="optimal $\\beta_{\\rm s}^\\star$")
+    ax.semilogy(snr, mopt, color="k", ls="-", label="optimal $\\beta_{\\rm s}^\\star$")
     ax.semilogy(snr, col(so, "mse_orth"), color=STY["OMAL"][1], ls="-.", label="OMA + LMMSE")
     ax.semilogy(snr, col(so, "mse_oma_wiener"), color=STY["OMA"][1], ls=":", label="OMA")
-    ax2 = ax.twinx()
-    ax2.plot(snr, col(so, "beta_s_opt"), color="k", ls="--", lw=0.9, label="$\\beta_{\\rm s}^\\star$, right axis")
-    ax2.set_ylim(0, 1.05); ax2.set_ylabel("$\\beta_{\\rm s}^\\star$"); ax2.grid(False)
+    for x, ha in [(-6, "left"), (0, "center"), (5, "center"), (10, "center"), (20, "center")]:
+        k = int(np.argmin(np.abs(snr - x)))
+        ax.annotate(f"$\\beta_{{\\rm s}}^\\star={bopt[k]:.2f}$", xy=(snr[k], mopt[k]), xytext=(0, -14), textcoords="offset points",
+                    ha=ha, va="top", fontsize=6.5, arrowprops=dict(arrowstyle="-", lw=0.5, color="gray", shrinkB=1.5))
     ax.set_xlabel("per-user SNR (dB)"); ax.set_ylabel("per-user MSE")
-    ax.set_xlim(-10, 30); ax.set_ylim(1e-3, 1e3)
-    h1, l1 = ax.get_legend_handles_labels(); h2, l2 = ax2.get_legend_handles_labels()
-    d = dict(framealpha=0.95, handlelength=1.6, labelspacing=0.22, loc="upper right")
-    ax.legend(h1 + h2, l1 + l2, **d); ax._legend_spec = (h1 + h2, l1 + l2, d)
-    rect = dict(AXES_RECT); rect["right"] = 1 - 0.5 / CW
-    save(fig, "fig_sigdesign", rect=rect)
+    ax.set_xlim(-10, 30); ax.set_ylim(1e-3, 30)
+    h, l = ax.get_legend_handles_labels()   # plot order: matched, optimal, OMA + LMMSE, OMA
+    d = dict(framealpha=0.95, handlelength=1.6, labelspacing=0.22, handletextpad=0.4, borderpad=0.3, borderaxespad=0.2, loc="upper right")
+    ax.legend(h, l, **d); ax._legend_spec = (h, l, d)
+    save(fig, "fig_sigdesign")
 
 
 def fig_real(metric="ser"):
