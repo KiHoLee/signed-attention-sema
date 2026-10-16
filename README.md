@@ -24,23 +24,24 @@ Simulation code, result data, and figures for
 
 ## Figure and table map
 
-| Paper item | Script | Data |
-|---|---|---|
-| Fig. 2(a) closed forms vs Monte Carlo | `exp0_theory.py` | `theory_snr.csv`, `theory_beta.csv`, `theory_asym.csv` |
-| Fig. 2(b) LMMSE and SC weights, Fig. 3(a,b) SNR sweeps | `exp2_snr.py` | `snr_sweep_b{0.3,0.64,0.9}.csv` |
-| Fig. 2(c) signature design | `exp6_sigdesign.py` | `sigopt.csv`, `sigdesign_{0,10}dB.csv` |
-| Fig. 3(c) similarity sweep | `exp1_beta.py` | `beta_sweep_{0,10}dB.csv` |
-| Fig. 4, Table V real embeddings | `exp8_real.py` | `real_*.csv`, `real_stats.json` |
-| Table III profiles and block-varying rows | `exp3_profiles.py`, `exp4_varmix.py` | `profiles.json`, `varmix.json` |
-| Table IV user count and dimension | `exp5_scaling.py` | `scaling_U.csv`, `scaling_d.csv` |
-| Text: Haar-mask floor, mismatch, complexity | `exp7_misc.py` | `haar_masks.csv`, `mismatch.csv`, `complexity.json` |
-| Text: seed spread, decorrelation penalty | `exp9_seeds.py` | `seeds.csv` |
-| Text: receiver design study | `exp_variants.py` | `variants*.json` |
-| Trained receivers | `exp_train.py` | `ckpt/*.pt` |
+| Paper item | Script | Data | Figure file |
+|---|---|---|---|
+| Fig. 2 closed forms vs Monte Carlo | `exp0_theory.py` | `theory_snr.csv`, `theory_beta.csv`, `theory_asym.csv` | `fig/fig_theory.pdf` |
+| Fig. 3 LMMSE and SC weights | `exp2_snr.py` | `snr_sweep_b{0.3,0.64,0.9}.csv` | `fig/fig_weights.pdf` |
+| Fig. 4 signature design | `exp6_sigdesign.py` | `sigopt.csv`, `sigdesign_{0,10}dB.csv` | `fig/fig_sigdesign.pdf` |
+| Fig. 5 SER vs SNR, Fig. 6 cosine distortion vs SNR | `exp2_snr.py` | `snr_sweep_b0.64.csv` | `fig/fig_snr_ser.pdf`, `fig/fig_snr_cos.pdf` |
+| Fig. 7 SER vs similarity | `exp1_beta.py` | `beta_sweep_0dB.csv` | `fig/fig_beta_0dB_ser.pdf` |
+| Fig. 8, Table V real embeddings | `exp8_real.py` | `real_*.csv`, `real_stats.json` | `fig/fig_real.pdf` |
+| Table III profiles and block-varying rows | `exp3_profiles.py`, `exp4_varmix.py` | `profiles.json`, `varmix.json` | |
+| Table IV user count and dimension | `exp5_scaling.py` | `scaling_U.csv`, `scaling_d.csv` | |
+| Text: Haar-mask floor, mismatch, complexity | `exp7_misc.py` | `haar_masks.csv`, `mismatch.csv`, `complexity.json` | |
+| Text: seed spread, decorrelation penalty | `exp9_seeds.py` | `seeds.csv` | |
+| Text: receiver design study | `exp_variants.py` | `variants*.json` | |
+| Trained receivers | `exp_train.py` | `ckpt/*.pt` | |
 
-`python3 code/replot.py` regenerates `fig/fig_analysis.pdf` (Fig. 2),
-`fig/fig_synth.pdf` (Fig. 3), and `fig/fig_real.pdf` (Fig. 4) from `data/`
-(set `SEMA_DEVICE=cpu` on machines without CUDA); `python3 code/fill_tables.py`
+`python3 code/replot.py` regenerates the seven result figures from `data/`
+(set `SEMA_DEVICE=cpu` on machines without CUDA); every figure is drawn on a
+3.5 in canvas with an 8:6 axes box and 8 pt text. `python3 code/fill_tables.py`
 regenerates the LaTeX source of Tables III to V. `fig/fig1_system.pdf` is the
 system diagram of Fig. 1. The experiments were run on one NVIDIA RTX A4500
 (CUDA) and the closed-form checks of `exp0_theory.py` on CPU.

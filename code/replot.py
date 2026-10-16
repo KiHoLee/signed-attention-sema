@@ -20,13 +20,19 @@ FIG.mkdir(exist_ok=True)
 
 plt.rcParams.update({
     "font.family": "serif", "font.serif": ["DejaVu Serif", "Times New Roman"],
-    "font.size": 8.5, "axes.labelsize": 8.5, "legend.fontsize": 6.4,
+    "font.size": 8, "axes.labelsize": 8, "legend.fontsize": 7,
     "xtick.labelsize": 7.5, "ytick.labelsize": 7.5,
     "axes.grid": True, "grid.linestyle": "--", "grid.linewidth": 0.4, "grid.alpha": 0.6,
     "lines.linewidth": 1.2, "lines.markersize": 3.4,
-    "figure.figsize": (3.3, 2.475), "pdf.fonttype": 42,
+    "figure.figsize": (3.5, 2.0625 + 0.45), "pdf.fonttype": 42,
 })
-AXES_RECT = dict(left=0.19, right=0.965, top=0.965, bottom=0.17)
+# every result figure: 3.5 in canvas (the printed column width) and one axes
+# box of 2.75 x 2.0625 in (8:6); figures with the legend below the axes add
+# 0.68 in of canvas for the legend
+CW, AX_W, AX_H = 3.5, 2.75, 2.0625
+CH, CH_LEG = AX_H + 0.45, AX_H + 0.45 + 0.62
+AXES_RECT = dict(left=0.64 / CW, right=(0.64 + AX_W) / CW, top=1 - 0.05 / CH, bottom=0.40 / CH)
+AXES_RECT_LEG = dict(left=0.64 / CW, right=(0.64 + AX_W) / CW, top=1 - 0.05 / CH_LEG, bottom=1.02 / CH_LEG)
 
 # label, color, marker, linestyle  (one triple per scheme, every figure)
 STY = {
@@ -99,10 +105,10 @@ def _overlaps(ax, box, r):
     return None
 
 
-def save(fig, name, inset=None):
+def save(fig, name, inset=None, rect=None):
     """Enforced checks: every axis label inside the canvas; no curve point
     or segment between markers inside the legend box (or the inset box)."""
-    fig.subplots_adjust(**AXES_RECT)
+    fig.subplots_adjust(**(rect or AXES_RECT))
     fig.canvas.draw()
     r = fig.canvas.get_renderer()
     F = fig.bbox
@@ -162,27 +168,41 @@ def fig_theory():
         ax.semilogy(snr, col(rs, k), ls="none", marker=mk, color=c, markerfacecolor="none", label="_nolegend_")
     ax.semilogy([], [], ls="none", marker="o", color="k", markerfacecolor="none", label="Monte Carlo")
     ax.set_xlabel("per-user SNR (dB)"); ax.set_ylabel("per-user MSE")
-    ax.set_xlim(-10, 30); ax.set_ylim(1e-3, 10)
-    legend(ax, loc="lower left")
+    ax.set_xlim(-10, 30); ax.set_ylim(1e-3, 2e3)
+    legend(ax, loc="upper right")
     save(fig, "fig_theory")
 
 
 def fig_weights():
+    """Beta is encoded by the shade of one color per scheme, so the proposed
+    receiver keeps its line type, marker, and color of every other figure."""
     fig, ax = plt.subplots()
-    for beta, ls in [(0.3, ":"), (0.64, "-"), (0.9, "--")]:
+    ends = []
+    for beta, al in [(0.3, 0.35), (0.64, 0.65), (0.9, 1.0)]:
         rs = rows(f"snr_sweep_b{beta}.csv")
         snr = col(rs, "snr")
         rho = 10 ** (snr / 10)
         l1, l2 = L.eig_sym(4, beta)
         w = rho * (l1 - l2) * (1 - l1 * l2 * rho) / (4 * (1 + l1 ** 2 * rho) * (1 + l2 ** 2 * rho))
-        ax.plot(snr, w, color=STY["LMMSE"][1], ls=ls, label=f"Informed LMMSE, $\\beta={beta}$")
-        ax.plot(snr, col(rs, "SC_offdiag_mean"), color=STY["SC"][1], ls=ls, marker="o", markevery=2,
-                label=f"Proposed SC, $\\beta={beta}$")
-        ax.axvline(L.snr_boundary_sym(4, beta), color="gray", lw=0.6, ls=ls, label="_guide")
+        ax.plot(snr, w, color=STY["LMMSE"][1], ls=STY["LMMSE"][3], alpha=al, label=f"_lmmse{beta}")
+        ax.plot(snr, col(rs, "SC_offdiag_mean"), color=STY["SC"][1], ls=STY["SC"][3], marker=STY["SC"][2],
+                markevery=2, alpha=al, label=f"_sc{beta}")
+        ax.axvline(L.snr_boundary_sym(4, beta), color="gray", lw=0.6, alpha=al, label="_guide")
+        ends.append((beta, w[-1]))
     ax.axhline(0, color="k", lw=0.6, label="_guide")
-    ax.set_xlabel("per-user SNR (dB)"); ax.set_ylabel("off-diagonal weight")
-    ax.set_xlim(-6, 24)
-    legend(ax, loc="lower left", ncol=1)
+    for (beta, _), xa, xt in zip(ends, [22, 17, 11], [23.5, 18, 12]):
+        rs = rows(f"snr_sweep_b{beta}.csv"); snr = col(rs, "snr"); rho = 10 ** (snr / 10); l1, l2 = L.eig_sym(4, beta)
+        w = rho * (l1 - l2) * (1 - l1 * l2 * rho) / (4 * (1 + l1 ** 2 * rho) * (1 + l2 ** 2 * rho))
+        ya = float(np.interp(xa, snr, w))
+        ax.annotate(f"$\\beta={beta}$", xy=(xa, ya), xytext=(xt, 0.5), ha="center", va="center", fontsize=7,
+                    arrowprops=dict(arrowstyle="-", lw=0.5, color="gray", shrinkB=2))
+    hb = [Line2D([], [], color=STY["SC"][1], ls=STY["SC"][3], marker=STY["SC"][2], label="Proposed SC"),
+          Line2D([], [], color=STY["LMMSE"][1], ls=STY["LMMSE"][3], label="Informed LMMSE")]
+    ax.set_xlabel("per-user SNR (dB)"); ax.set_ylabel("weight $[\\mathbf{W}]_{uv}$")
+    ax.set_xlim(-6, 24); ax.set_ylim(-2.3, 0.7)
+    d = dict(framealpha=0.95, handlelength=1.6, labelspacing=0.22, handletextpad=0.4, borderpad=0.3,
+             borderaxespad=0.2, loc="lower left")
+    ax.legend(hb, [h.get_label() for h in hb], **d); ax._legend_spec = (hb, [h.get_label() for h in hb], d)
     save(fig, "fig_weights")
 
 
@@ -199,11 +219,9 @@ def fig_snr(metric="ser"):
     ax.set_xlabel("per-user SNR (dB)")
     ax.set_ylabel("SER" if metric == "ser" else "cosine distortion $1-\\cos$")
     ax.set_xlim(-6, 24)
-    if metric == "ser":
-        ax.set_ylim(1e-6, 1.5); legend(ax, loc="lower left", ncol=2)
-    else:
-        ax.set_ylim(5e-3, 1); legend(ax, loc="lower left", ncol=2)
-    save(fig, f"fig_snr_{metric}")
+    ax.set_ylim(1e-6, 1.5) if metric == "ser" else ax.set_ylim(5e-3, 1)
+    fig.set_size_inches(CW, CH_LEG); fig.subplots_adjust(**AXES_RECT_LEG)
+    _shared_legend(fig, [ax], f"fig_snr_{metric}", 3, fs=7)
 
 
 def fig_beta(snr=0, metric="ser"):
@@ -216,14 +234,12 @@ def fig_beta(snr=0, metric="ser"):
             continue
         y = col(rs, f"{metric}_{k}") if metric == "ser" else 1 - col(rs, f"cos_{k}")
         plot(ax, beta, floor(y, 1e-6) if metric == "ser" else y, k, ax.semilogy, markevery=2)
-    ax.set_xlabel("pairwise semantic similarity $\\beta$")
+    ax.set_xlabel("similarity $\\beta$")
     ax.set_ylabel("SER" if metric == "ser" else "cosine distortion $1-\\cos$")
     ax.set_xlim(0, 0.9)
-    if metric == "ser":
-        ax.set_ylim(1e-6, 1.5); legend(ax, loc="lower left", ncol=2)
-    else:
-        ax.set_ylim(2e-2, 1); legend(ax, loc="lower left", ncol=2)
-    save(fig, f"fig_beta_{snr}dB_{metric}")
+    ax.set_ylim(1e-6, 1.5) if metric == "ser" else ax.set_ylim(2e-2, 1)
+    fig.set_size_inches(CW, CH_LEG); fig.subplots_adjust(**AXES_RECT_LEG)
+    _shared_legend(fig, [ax], f"fig_beta_{snr}dB_{metric}", 3, fs=7)
 
 
 def fig_scaling_U():
@@ -247,28 +263,27 @@ def fig_sigdesign():
     so = rows("sigopt.csv")
     snr = col(so, "snr")
     fig, ax = plt.subplots()
-    ax.semilogy(snr, col(so, "mse_matched"), color=STY["LMMSE"][1], ls="-", label="matched, $\\beta_s=\\beta$")
-    ax.semilogy(snr, col(so, "mse_opt"), color="#c0392b", ls="-", label="optimal $\\beta_s^\\star$")
+    ax.semilogy(snr, col(so, "mse_matched"), color=STY["LMMSE"][1], ls="-", label="matched, $\\beta_{\\rm s}=\\beta$")
+    ax.semilogy(snr, col(so, "mse_opt"), color="k", ls="-", label="optimal $\\beta_{\\rm s}^\\star$")
     ax.semilogy(snr, col(so, "mse_orth"), color=STY["OMAL"][1], ls="-.", label="OMA + LMMSE")
     ax.semilogy(snr, col(so, "mse_oma_wiener"), color=STY["OMA"][1], ls=":", label="OMA")
     ax2 = ax.twinx()
-    ax2.plot(snr, col(so, "beta_s_opt"), color="#c0392b", ls="--", lw=0.9, label="$\\beta_s^\\star$ (right axis)")
-    ax2.set_ylim(0, 1.05); ax2.set_ylabel("optimal signature correlation $\\beta_s^\\star$")
-    ax2.grid(False)
-    ax.set_xlabel("per-user SNR (dB)"); ax.set_ylabel("per-user MSE (LMMSE)")
-    ax.set_xlim(-10, 30); ax.set_ylim(1e-3, 2)
+    ax2.plot(snr, col(so, "beta_s_opt"), color="k", ls="--", lw=0.9, label="$\\beta_{\\rm s}^\\star$, right axis")
+    ax2.set_ylim(0, 1.05); ax2.set_ylabel("$\\beta_{\\rm s}^\\star$"); ax2.grid(False)
+    ax.set_xlabel("per-user SNR (dB)"); ax.set_ylabel("per-user MSE")
+    ax.set_xlim(-10, 30); ax.set_ylim(1e-3, 1e3)
     h1, l1 = ax.get_legend_handles_labels(); h2, l2 = ax2.get_legend_handles_labels()
-    ax.legend(h1 + h2, l1 + l2, loc="lower left", framealpha=0.95, handlelength=1.6, labelspacing=0.22)
-    fig.subplots_adjust(left=0.17, right=0.84, top=0.965, bottom=0.17)
-    fig.savefig(FIG / "fig_sigdesign.pdf"); plt.close(fig); print("[OK] fig_sigdesign")
+    d = dict(framealpha=0.95, handlelength=1.6, labelspacing=0.22, loc="upper right")
+    ax.legend(h1 + h2, l1 + l2, **d); ax._legend_spec = (h1 + h2, l1 + l2, d)
+    rect = dict(AXES_RECT); rect["right"] = 1 - 0.5 / CW
+    save(fig, "fig_sigdesign", rect=rect)
 
 
 def fig_real(metric="ser"):
     rs = rows("real_ag_news_bert-base-uncased_snr.csv")
     snr = col(rs, "snr")
-    W, H = 3.3, 2.5
-    fig, ax = plt.subplots(figsize=(W, H))
-    fig.subplots_adjust(left=0.62 / W, right=1 - 0.1 / W, top=0.98, bottom=1.08 / H)
+    fig, ax = plt.subplots(figsize=(CW, CH_LEG))
+    fig.subplots_adjust(**AXES_RECT_LEG)
     keys = ["SC", "SCsoft", "ATT", "TLC", "LMMSEe", "LMMSE", "MOM", "SR", "MF", "OMA", "OMAL"]
     for k in keys:
         if f"{metric}_{k}" not in rs[0]:
@@ -285,7 +300,7 @@ def fig_real(metric="ser"):
         ax.set_ylabel("topic accuracy"); ax.set_ylim(0.2, 1.0)
     ax.set_xlim(-4, 20)
     # eleven schemes do not fit inside a column-width axes: shared legend below the axes
-    _shared_legend(fig, [ax], "fig_real" if metric == "ser" else f"fig_real_{metric}", 2, fs=6.0)
+    _shared_legend(fig, [ax], "fig_real" if metric == "ser" else f"fig_real_{metric}", 3, fs=7)
 
 
 ALL = {"theory": fig_theory, "weights": fig_weights,
@@ -317,7 +332,7 @@ def _shared_legend(fig, axs, name, ncol, fs=6.4):
     idx = sorted(range(len(ls)), key=lambda i: rank.get(ls[i], 99))
     fig.legend([hs[i] for i in idx], [ls[i] for i in idx], loc="lower center", ncol=ncol,
                frameon=True, framealpha=0.95, handlelength=1.6, labelspacing=0.25,
-               handletextpad=0.4, columnspacing=1.0, borderaxespad=0.1, fontsize=fs)
+               handletextpad=0.4, columnspacing=0.8, borderaxespad=0.1, fontsize=fs)
     fig.canvas.draw()
     r = fig.canvas.get_renderer(); F = fig.bbox
     for ax in axs:
@@ -478,7 +493,8 @@ ALL["real"] = lambda: fig_real("ser")
 
 
 if __name__ == "__main__":
-    names = sys.argv[1:] or list(ALL)
+    PAPER = ["theory", "weights", "sigdesign", "snr_ser", "snr_cos", "beta0", "real_ser"]
+    names = sys.argv[1:] or PAPER
     failed = []
     for n in names:
         try:

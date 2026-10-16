@@ -57,7 +57,7 @@ def main():
     c0 = ["SC", "SCh", "SCsgn", "TLC", "LMMSE", "LMMSEg", "MOM", "MF", "OMA"]
     c1 = ["SC", "TLC", "LMMSE", "MF", "OMA"]
     names = [("sym", "Symmetric"), ("asym", "Asymmetric"), ("nearfar", "Near-far"),
-             ("both", "Asymmetric, near-far"), ("twoclust", "Two scenes"), ("negcorr", "Negative correlation"),
+             ("twoclust", "Two scenes"), ("negcorr", "Negative correlation"),
              ("indep", "Independent")]
     L.append("% ---- Table: profiles (generated) ----")
     L.append("\\begin{table*}[!t]\n\\centering\n\\caption{SER at $0$~dB and Cosine Recovery at $10$~dB Under Heterogeneous, Out-of-Distribution, and Block-Varying Similarity Profiles ($U=4$, $d=64$). The Block-Varying Rows Report Both Metrics at the Stated SNR}\n\\label{tab:profiles}\n\\scriptsize\n\\setlength{\\tabcolsep}{2.2pt}\n\\renewcommand{\\arraystretch}{1.0}")
@@ -74,7 +74,7 @@ def main():
     # ------------------------------------------------ scaling in U and d (one table)
     D = rows("scaling_d.csv"); Ur = rows("scaling_U.csv")
     L.append("% ---- Table: scaling (generated) ----")
-    L.append("\\begin{table}[!t]\n\\centering\n\\caption{Cosine Recovery Versus User Count ($d=64$) and SER and Cosine Recovery Versus Embedding Dimension ($U=4$) at $\\beta=0.64$. SC$_{64}$ and SC$_{256}$ Are Trained at $d=64$ and $d=256$ and Applied Unchanged}\n\\label{tab:dim}\n\\scriptsize\n\\setlength{\\tabcolsep}{0.9pt}\n\\renewcommand{\\arraystretch}{1.0}")
+    L.append("\\begin{table}[!t]\n\\centering\n\\caption{Cosine Recovery Versus User Count ($d=64$) and SER and Cosine Recovery Versus Embedding Dimension ($U=4$) at $\\beta=0.64$, With SC$_{64}$ and SC$_{256}$ Trained at $d=64$ and $d=256$ and Applied Unchanged}\n\\label{tab:dim}\n\\scriptsize\n\\setlength{\\tabcolsep}{0.9pt}\n\\renewcommand{\\arraystretch}{1.0}")
     cols = ["SC", "LMMSE", "MOM", "SR", "MF", "OMA"]
     L.append("\\begin{tabular}{l" + "c" * len(cols) + "}\n\\toprule")
     L.append(" & " + " & ".join(LAB[c] for c in cols) + " \\\\\n\\midrule")
@@ -108,7 +108,7 @@ def main():
                  % (len(cols) + 1, nm, st["beta_mean"], st["beta_std"], 100 * st["rank1_mean"], S[key]["probe_acc_clean_eval_groups"]))
         for snr in [0, 10]:
             L.append(f"SER, {snr}~dB & " + " & ".join(ser(g(R[snr], c, "ser")) for c in cols) + " \\\\")
-        for snr in ([0, 10] if key.startswith("ag_news_bert") else [10]):
+        for snr in ([0, 10] if key.startswith("ag_news_bert") else ([10] if key.startswith("sst2") else [])):
             L.append(f"accuracy, {snr}~dB & " + " & ".join(cs(g(R[snr], c, "acc")) for c in cols) + " \\\\")
     L.append("\\bottomrule\n\\end{tabular}\n\\end{table*}\n")
     OUT.write_text("\n".join(L) + "\n")
