@@ -38,14 +38,14 @@ AXES_RECT_LEG = dict(left=0.64 / CW, right=(0.64 + AX_W) / CW, top=1 - 0.05 / CH
 # label, color, marker, linestyle  (one triple per scheme, every figure)
 STY = {
     "SC":     ("Proposed SC",          "#c0392b", "o", "-"),
-    "SCsoft": ("softmax SC",  "#e67e22", "h", "--"),
+    "SCsoft": ("Softmax SC",  "#e67e22", "h", "--"),
     "SCh":    ("SC-g", "#a93226", "8", "-"),
     "SCsgn":  ("SC-s",  "#922b21", "*", "-"),
     "ATT":    ("Attention receiver",   "#d35400", "p", "--"),
     "TLC":    ("TLC",                  "#8e44ad", "P", "--"),
     "LMMSE":  ("Genie-aided LMMSE",       "#16a085", "v", "-."),
     "MOM":    ("Moment LMMSE",         "#0e6655", "<", ":"),
-    "LMMSEe": ("empirical LMMSE", "#1abc9c", ">", "-."),
+    "LMMSEe": ("Empirical LMMSE", "#1abc9c", ">", "-."),
     "SR":     ("SR",                   "#2c5fa8", "s", "--"),
     "MF":     ("MF",       "#7d6608", "X", ":"),
     "OMA":    ("OMA",                  "#7f8c8d", "^", ":"),
@@ -56,7 +56,7 @@ STY = {
     "cf_omal":  ("OMA + LMMSE, closed form", "#566573", "", "-."),
 }
 ORDER = ["SC", "SCsoft", "ATT", "TLC", "LMMSE", "MOM", "LMMSEe", "SR", "MF", "OMA", "OMAL",
-         "cf_lmmse", "cf_sr", "cf_omal", "cf_oma"]
+         "cf_lmmse", "cf_sr", "cf_oma", "cf_omal"]
 
 
 def rows(name):
@@ -162,7 +162,7 @@ def fig_theory():
     rs = rows("theory_snr.csv")
     snr = col(rs, "snr")
     fig, ax = plt.subplots()
-    for k in ["cf_lmmse", "cf_sr", "cf_omal", "cf_oma"]:
+    for k in ["cf_lmmse", "cf_sr", "cf_oma", "cf_omal"]:
         plot(ax, snr, col(rs, k), k, ax.semilogy)
     for k, mk, c in [("mc_lmmse", "v", STY["LMMSE"][1]), ("mc_sr", "s", STY["SR"][1]),
                      ("mc_omal", "d", STY["OMAL"][1]), ("mc_oma", "^", STY["OMA"][1])]:
@@ -270,8 +270,8 @@ def fig_sigdesign():
     fig, ax = plt.subplots()
     ax.semilogy(snr, col(so, "mse_matched"), color=STY["LMMSE"][1], ls="-", label="matched, $\\beta_{\\rm s}=\\beta$")
     ax.semilogy(snr, mopt, color="k", ls="-", label="optimal $\\beta_{\\rm s}^\\star$")
-    ax.semilogy(snr, col(so, "mse_orth"), color=STY["OMAL"][1], ls="-.", label="OMA + LMMSE")
     ax.semilogy(snr, col(so, "mse_oma_wiener"), color=STY["OMA"][1], ls=":", label="OMA")
+    ax.semilogy(snr, col(so, "mse_orth"), color=STY["OMAL"][1], ls="-.", label="OMA + LMMSE")
     # the optimal correlation at five SNRs: a dot on the optimal curve, a dark leader, and the value
     for x, ha, dx, dy in [(-6, "left", 2, -16), (0, "center", 0, -36), (5, "left", 7, -16), (10, "center", 0, -36), (20, "center", 0, -16)]:
         k = int(np.argmin(np.abs(snr - x)))
@@ -407,7 +407,7 @@ def fig_analysis_combo():
     fig, axs = _panel_axes(3)
     # (a)
     rs = rows("theory_snr.csv"); snr = col(rs, "snr"); ax = axs[0]
-    for k in ["cf_lmmse", "cf_sr", "cf_omal", "cf_oma"]:
+    for k in ["cf_lmmse", "cf_sr", "cf_oma", "cf_omal"]:
         plot(ax, snr, col(rs, k), k, ax.semilogy)
     for k, mk, c in [("mc_lmmse", "v", STY["LMMSE"][1]), ("mc_sr", "s", STY["SR"][1]),
                      ("mc_omal", "d", STY["OMAL"][1]), ("mc_oma", "^", STY["OMA"][1])]:
