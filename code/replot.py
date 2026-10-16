@@ -191,12 +191,13 @@ def fig_weights():
         ax.axvline(L.snr_boundary_sym(4, beta), color="gray", lw=0.6, alpha=al, label="_guide")
         ends.append((beta, w[-1]))
     ax.axhline(0, color="k", lw=0.6, label="_guide")
+    # one label per similarity, with a leader to each of its two curves (oracle LMMSE and proposed SC)
     for (beta, _), xa, xt in zip(ends, [22, 17, 11], [23.5, 18, 12]):
         rs = rows(f"snr_sweep_b{beta}.csv"); snr = col(rs, "snr"); rho = 10 ** (snr / 10); l1, l2 = L.eig_sym(4, beta)
         w = rho * (l1 - l2) * (1 - l1 * l2 * rho) / (4 * (1 + l1 ** 2 * rho) * (1 + l2 ** 2 * rho))
-        ya = float(np.interp(xa, snr, w))
-        ax.annotate(f"$\\beta={beta}$", xy=(xa, ya), xytext=(xt, 0.5), ha="center", va="center", fontsize=7,
-                    arrowprops=dict(arrowstyle="-", lw=0.5, color="gray", shrinkB=2))
+        for y in (float(np.interp(xa, snr, w)), float(np.interp(xa, snr, col(rs, "SC_offdiag_mean")))):
+            ax.annotate(f"$\\beta={beta}$", xy=(xa, y), xytext=(xt, 0.5), ha="center", va="center", fontsize=7,
+                        arrowprops=dict(arrowstyle="-", lw=0.7, color="0.35", shrinkB=2))
     hb = [Line2D([], [], color=STY["SC"][1], ls=STY["SC"][3], marker=STY["SC"][2], label="Proposed SC"),
           Line2D([], [], color=STY["LMMSE"][1], ls=STY["LMMSE"][3], label="Oracle LMMSE")]
     ax.set_xlabel("per-user SNR (dB)"); ax.set_ylabel("weight $[\\mathbf{W}]_{uv}$")
