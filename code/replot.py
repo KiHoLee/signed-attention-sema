@@ -43,7 +43,7 @@ STY = {
     "SCsgn":  ("SC-s",  "#922b21", "*", "-"),
     "ATT":    ("Attention receiver",   "#d35400", "p", "--"),
     "TLC":    ("TLC",                  "#8e44ad", "P", "--"),
-    "LMMSE":  ("Oracle LMMSE",       "#16a085", "v", "-."),
+    "LMMSE":  ("Genie-aided LMMSE",       "#16a085", "v", "-."),
     "MOM":    ("Moment LMMSE",         "#0e6655", "<", ":"),
     "LMMSEe": ("empirical LMMSE", "#1abc9c", ">", "-."),
     "SR":     ("SR",                   "#2c5fa8", "s", "--"),
@@ -200,7 +200,7 @@ def fig_weights():
             ax.annotate(f"$\\beta={beta}$", xy=(xa, y), xytext=(xt, 0.45), ha="center", va="center", fontsize=7,
                         arrowprops=dict(arrowstyle="-", lw=0.7, color="0.35", shrinkB=3))
     hb = [Line2D([], [], color=STY["SC"][1], ls=STY["SC"][3], marker=STY["SC"][2], label="Proposed SC"),
-          Line2D([], [], color=STY["LMMSE"][1], ls=STY["LMMSE"][3], label="Oracle LMMSE")]
+          Line2D([], [], color=STY["LMMSE"][1], ls=STY["LMMSE"][3], label="Genie-aided LMMSE")]
     ax.set_xlabel("per-user SNR (dB)"); ax.set_ylabel("weight $[\\mathbf{W}]_{uv}$")
     ax.set_xlim(-6, 24); ax.set_ylim(-2.3, 0.75)
     d = dict(framealpha=0.95, handlelength=1.6, labelspacing=0.22, handletextpad=0.4, borderpad=0.3,
@@ -426,7 +426,7 @@ def fig_analysis_combo():
     ax.axhline(0, color="k", lw=0.6, label="_guide")
     # compact legend: scheme by color, beta by line style (two short columns fit inside the axes)
     hb = [Line2D([], [], color=STY["SC"][1], ls="-", marker="o", label="Proposed SC"),
-          Line2D([], [], color=STY["LMMSE"][1], ls="-", label="Oracle LMMSE"),
+          Line2D([], [], color=STY["LMMSE"][1], ls="-", label="Genie-aided LMMSE"),
           Line2D([], [], color="k", ls=":", label="$\\beta=0.3$"),
           Line2D([], [], color="k", ls="-", label="$\\beta=0.64$"),
           Line2D([], [], color="k", ls="--", label="$\\beta=0.9$")]

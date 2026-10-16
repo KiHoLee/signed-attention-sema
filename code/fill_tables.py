@@ -11,7 +11,7 @@ DATA = ROOT / "data"
 OUT = ROOT / "tables_gen.tex"
 
 LAB = {"SC": "SC", "SCh": "SC-g", "SCsgn": "SC-s", "SCsoft": "SC-soft", "ATT": "Attention", "TLC": "TLC", "LMMSE": "LMMSE",
-       "LMMSEe": "LMMSE-emp", "LMMSEg": "Pair oracle", "MOM": "Moment LMMSE", "SR": "SR", "MF": "MF",
+       "LMMSEe": "LMMSE-emp", "LMMSEg": "Pair genie", "MOM": "Moment LMMSE", "SR": "SR", "MF": "MF",
        "OMA": "OMA", "OMAL": "OMA + LMMSE"}
 
 
@@ -31,7 +31,7 @@ def ser(v):
     """SER cell: three decimals above 1e-3, otherwise scientific with one digit;
     exact zero over the run is printed as 0 (the text states the decision count)."""
     if v is None:
-        return "--"
+        return "-"
     if v == 0:
         return "$0$"
     if v >= 1e-3:
@@ -42,11 +42,11 @@ def ser(v):
 
 def ser4(v):
     """SER scaled by 1e4 with one decimal (for the dimension block)."""
-    return "--" if v is None else f"${v * 1e4:.1f}$"
+    return "-" if v is None else f"${v * 1e4:.1f}$"
 
 
 def cs(v):
-    return "--" if v is None else f"${v:.3f}$"
+    return "-" if v is None else f"${v:.3f}$"
 
 
 def main():
