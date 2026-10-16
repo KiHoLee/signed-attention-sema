@@ -41,7 +41,7 @@ Simulation code, result data, and figures for
 
 `python3 code/replot.py` regenerates the seven result figures from `data/`
 (set `SEMA_DEVICE=cpu` on machines without CUDA); every figure is drawn on a
-3.5 in canvas with an 8:6 axes box and 8 pt text. `python3 code/fill_tables.py`
+3.5 in canvas with an 8:6 axes box and 8 pt Times text (STIX math). `python3 code/fill_tables.py`
 regenerates the LaTeX source of Tables III to V. `fig/fig1_system.pdf` is the
 system diagram of Fig. 1. The experiments were run on one NVIDIA RTX A4500
 (CUDA) and the closed-form checks of `exp0_theory.py` on CPU.

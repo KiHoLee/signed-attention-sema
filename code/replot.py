@@ -19,7 +19,8 @@ DATA, FIG = ROOT / "data", ROOT / "fig"
 FIG.mkdir(exist_ok=True)
 
 plt.rcParams.update({
-    "font.family": "serif", "font.serif": ["DejaVu Serif", "Times New Roman"],
+    "font.family": "serif", "font.serif": ["Times New Roman", "Times", "Nimbus Roman", "STIXGeneral"],
+    "mathtext.fontset": "stix",
     "font.size": 8, "axes.labelsize": 8, "legend.fontsize": 7,
     "xtick.labelsize": 7.5, "ytick.labelsize": 7.5,
     "axes.grid": True, "grid.linestyle": "--", "grid.linewidth": 0.4, "grid.alpha": 0.6,
