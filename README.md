@@ -37,6 +37,7 @@ Simulation code, result data, and figures for
 | Text: Haar-mask floor, mismatch, complexity | `exp7_misc.py` | `haar_masks.csv`, `mismatch.csv`, `complexity.json` | |
 | Text: seed spread, decorrelation penalty | `exp9_seeds.py` | `seeds.csv` | |
 | Floor points of Figs. 5, 7, 8 at 10x blocks (merged into the base files) | `run_floor.sh`, `merge_floor.py` | `*_floor.csv` | |
+| SC-rho and TLC-g variants (overlays in Figs. 5-7) | `exp_train.py gramsc_U4_d64_s1_rho`, `exp_floor_variants.py snr` / `beta` | `variants_floor/*.csv`, `ckpt/gramsc_U4_d64_s1_rho.pt` | |
 | Text: receiver design study | `exp_variants.py` | `variants*.json` | |
 | Trained receivers | `exp_train.py` | `ckpt/*.pt` | |
 

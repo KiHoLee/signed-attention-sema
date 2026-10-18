@@ -35,6 +35,7 @@ RUNS["gramsc_U4_d256_s1"] = dict(kind="sc", U=4, d=256, seed=1)
 RUNS["att_U4_d64_s1"] = dict(kind="att", U=4, d=64, seed=1)
 RUNS["gramsc_U4_d64_s1_h"] = dict(kind="sc", U=4, d=64, seed=1, use_h=True)          # gain-conditioned variant
 RUNS["gramsc_U4_d64_s1_sgn"] = dict(kind="sc", U=4, d=64, seed=1, profile="mixed_signed")  # signed-coefficient training
+RUNS["gramsc_U4_d64_s1_rho"] = dict(kind="sc", U=4, d=64, seed=1, use_rho=True, K=1000)       # SC-rho: long-term noise estimate input
 
 
 def train_one(name):
@@ -43,7 +44,8 @@ def train_one(name):
     iters = 60 if QUICK else C["iters"]
     if r["kind"] == "sc":
         model = L.GramSC(U, C["hidden"], softmax=r.get("softmax", False),
-                         feat=C["feat"], use_h=r.get("use_h", C["use_h"]))
+                         feat=C["feat"], use_h=r.get("use_h", C["use_h"]),
+                         use_rho=r.get("use_rho", False), K=r.get("K", 1000))
     else:
         model = L.ProjAttention(U, d)
     t0 = time.time()

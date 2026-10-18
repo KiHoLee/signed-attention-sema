@@ -321,10 +321,11 @@ class GramSC(nn.Module):
     already uses). softmax=True gives the convex twin: W(T) = softmax_rows
     (f_theta), identical architecture, weights confined to the simplex."""
     def __init__(self, U: int, hidden: int = 64, softmax: bool = False,
-                 feat: str = "raw", use_h: bool = False):
+                 feat: str = "raw", use_h: bool = False, use_rho: bool = False, K: int = 1000):
         super().__init__()
         self.U, self.softmax, self.feat, self.use_h = U, softmax, feat, use_h
-        n_in = U * U + (U if feat == "norm" else 0) + (U if use_h else 0)
+        self.use_rho, self.K = use_rho, K    # SC-rho: one extra input, log of a long-term noise estimate
+        n_in = U * U + (U if feat == "norm" else 0) + (U if use_h else 0) + (1 if use_rho else 0)
         self.score = nn.Sequential(nn.Linear(n_in, hidden), nn.ReLU(),
                                    nn.Linear(hidden, hidden), nn.ReLU(),
                                    nn.Linear(hidden, U * U))
@@ -334,10 +335,11 @@ class GramSC(nn.Module):
             if softmax:   # start near the identity: large diagonal logits
                 self.score[-1].bias.copy_(4.0 * torch.eye(U).reshape(-1))
 
-    def features(self, t, h=None):
+    def features(self, t, h=None, rho_inv=None):
         """The score network reads the Gram T = t t^T (sum over the d
         coordinates, not the mean), whose entries are free of d:
-        E[T] = Gam B Gam^T + rho^{-1} H^{-1} Bs H^{-1}."""
+        E[T] = Gam B Gam^T + rho^{-1} H^{-1} Bs H^{-1}.
+        rho_inv (batch,) is the long-term estimate of 1/rho (SC-rho only)."""
         B_, U, d = t.shape
         T = torch.einsum('bud,bvd->buv', t, t)
         if self.feat == "norm":
@@ -349,18 +351,36 @@ class GramSC(nn.Module):
         if self.use_h:
             assert h is not None, "this receiver reads the front-end gains"
             f.append(torch.log(h))
+        if self.use_rho:
+            assert rho_inv is not None, "this receiver reads a long-term noise estimate"
+            f.append(torch.log(rho_inv.clamp(min=1e-6)).reshape(B_, 1))
         return torch.cat(f, dim=1)
 
-    def weights(self, t, h=None):
+    def weights(self, t, h=None, rho_inv=None):
         B_, U, d = t.shape
-        W = self.score(self.features(t, h)).reshape(B_, U, U)
+        W = self.score(self.features(t, h, rho_inv)).reshape(B_, U, U)
         if self.softmax:
             return torch.softmax(W, dim=2)
         return W + torch.eye(U, device=t.device, dtype=t.dtype)
 
-    def forward(self, t, h=None):
-        W = self.weights(t, h)
+    def forward(self, t, h=None, rho_inv=None):
+        W = self.weights(t, h, rho_inv)
         return _nrm(torch.einsum('bui,bid->bud', W, t))
+
+
+def noise_estimate(t, B, h):
+    """Per-block estimate of 1/rho from front-end knowledge only: the SR
+    output Gamma^{-1} t_u has energy 1 + rho^{-1} [Bs^{-1}]_uu / h_u^2 in
+    expectation (unit-norm embeddings), so h_u^2 (||.||^2 - 1) / [Bs^{-1}]_uu
+    averaged over users (and, by the caller, over many blocks) estimates
+    1/rho. Returns (batch,)."""
+    batch, U, d = t.shape
+    if B.dim() == 2:
+        B = B.unsqueeze(0).expand(batch, U, U)
+    Gam = B * (h.unsqueeze(1) / h.unsqueeze(2))
+    s_sr = torch.linalg.solve(Gam, t)
+    binv = torch.diagonal(torch.linalg.inv(B), dim1=1, dim2=2)
+    return (((s_sr ** 2).sum(-1) - 1.0) * h ** 2 / binv).mean(dim=1)
 
 
 class ProjAttention(nn.Module):
@@ -396,6 +416,20 @@ class TLC(nn.Module):
 
     def forward(self, t):
         return _nrm(torch.einsum('ui,bid->bud', self.W, t))
+
+
+class TLCg(nn.Module):
+    """Gain-scaled static combiner (TLC-g): one U x U matrix A applied to the
+    gain-scaled outputs s_u = h_u t_u, result divided by h_u. A = B^{-1}
+    realizes the SR receiver for every gain realization, so the gain-induced
+    floor of the plain TLC cannot occur."""
+    def __init__(self, U: int):
+        super().__init__()
+        self.A = nn.Parameter(torch.eye(U))
+
+    def forward(self, t, h):
+        s = t * h.unsqueeze(-1)
+        return _nrm(torch.einsum('ui,bid->bud', self.A, s) / h.unsqueeze(-1))
 
 
 def n_params(m: nn.Module) -> int:
@@ -531,7 +565,20 @@ def train_receiver(model: nn.Module, U: int, d: int, iters: int, batch: int,
         else:
             e, B, h, snr = data_fn(batch, g)
         t = transmit_receive(e, signatures(B), h, snr, g)
-        out = model(t, h) if isinstance(model, GramSC) else model(t)
+        if isinstance(model, GramSC) and model.use_rho:
+            # long-term noise estimate from a separate draw of K blocks at this SNR
+            a2 = sample_profile(model.K, U, g, profile) if data_fn is None else None
+            if a2 is not None:
+                e2, _ = sample_embeddings(model.K, a2, d, g); B2 = affinity_matrix(a2); h2 = sample_gains(model.K, U, g)
+            else:
+                e2, B2, h2, _ = data_fn(model.K, g)
+            t2 = transmit_receive(e2, signatures(B2), h2, snr, g)
+            rho_inv = noise_estimate(t2, B2, h2).mean().expand(e.shape[0])
+            out = model(t, h, rho_inv)
+        elif isinstance(model, (GramSC, TLCg)):
+            out = model(t, h)
+        else:
+            out = model(t)
         loss = cosine_loss(out, e, lam, tail, kind=kind)
         opt.zero_grad(); loss.backward(); opt.step(); sched.step()
         if log and (it % log_every == 0 or it == iters - 1):

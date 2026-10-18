@@ -41,6 +41,8 @@ STY = {
     "SCsoft": ("Softmax SC",  "#e67e22", "h", "--"),
     "SCh":    ("SC-g", "#a93226", "8", "-"),
     "SCsgn":  ("SC-s",  "#922b21", "*", "-"),
+    "SCrho":  ("SC-$\\rho$",   "#e74c3c", "D", "--"),
+    "TLCg":   ("TLC-g",             "#6c3483", "x", "-."),
     "ATT":    ("Attention receiver",   "#d35400", "p", "--"),
     "TLC":    ("TLC",                  "#8e44ad", "P", "--"),
     "LMMSE":  ("Genie-aided LMMSE",       "#16a085", "v", "-."),
@@ -55,7 +57,7 @@ STY = {
     "cf_oma":   ("OMA, closed form",   "#7f8c8d", "", ":"),
     "cf_omal":  ("OMA + LMMSE, closed form", "#566573", "", "-."),
 }
-ORDER = ["SC", "SCsoft", "ATT", "TLC", "LMMSE", "MOM", "LMMSEe", "SR", "MF", "OMA", "OMAL",
+ORDER = ["SC", "SCrho", "SCsoft", "ATT", "TLC", "TLCg", "LMMSE", "MOM", "LMMSEe", "SR", "MF", "OMA", "OMAL",
          "cf_lmmse", "cf_sr", "cf_oma", "cf_omal"]
 
 
@@ -219,6 +221,12 @@ def fig_snr(metric="ser"):
             continue
         y = col(rs, f"{metric}_{k}") if metric == "ser" else 1 - col(rs, f"cos_{k}")
         plot(ax, snr, floor(y, 1e-6) if metric == "ser" else y, k, ax.semilogy)
+    vf = DATA / "variants_floor" / "snr_b0.64.csv"
+    if vf.exists():   # SC-rho and TLC-g from the floor study (code/exp_floor_variants.py)
+        rv = rows(vf); sv = col(rv, "snr")
+        for k, src in [("SCrho", "SCrho1000"), ("TLCg", "TLCg")]:
+            y = col(rv, f"{metric}_{src}") if metric == "ser" else 1 - col(rv, f"cos_{src}")
+            plot(ax, sv, floor(y, 1e-6) if metric == "ser" else y, k, ax.semilogy)
     ax.set_xlabel("per-user SNR (dB)")
     ax.set_ylabel("SER" if metric == "ser" else "cosine distortion $1-\\cos$")
     ax.set_xlim(-6, 24)
@@ -237,6 +245,12 @@ def fig_beta(snr=0, metric="ser"):
             continue
         y = col(rs, f"{metric}_{k}") if metric == "ser" else 1 - col(rs, f"cos_{k}")
         plot(ax, beta, floor(y, 1e-6) if metric == "ser" else y, k, ax.semilogy, markevery=2)
+    vf = DATA / "variants_floor" / "beta_0dB.csv"
+    if vf.exists() and snr == 0:
+        rv = rows(vf); bv = col(rv, "beta")
+        for k, src in [("SCrho", "SCrho1000"), ("TLCg", "TLCg")]:
+            y = col(rv, f"{metric}_{src}") if metric == "ser" else 1 - col(rv, f"cos_{src}")
+            plot(ax, bv, floor(y, 1e-6) if metric == "ser" else y, k, ax.semilogy)
     ax.set_xlabel("similarity $\\beta$")
     ax.set_ylabel("SER" if metric == "ser" else "cosine distortion $1-\\cos$")
     ax.set_xlim(0, 0.9)

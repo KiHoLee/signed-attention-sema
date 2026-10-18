@@ -32,11 +32,11 @@ def n_blocks(n):
     return 2000 if QUICK else n
 
 
-def load_sc(U, d=64, seed=1, lam=0.0, softmax=False, tag=None, feat=None, use_h=None):
+def load_sc(U, d=64, seed=1, lam=0.0, softmax=False, tag=None, feat=None, use_h=None, use_rho=False, K=1000):
     name = tag or (f"gramsc_U{U}_d{d}_s{seed}" + ("_lam" if lam > 0 else "") + ("_soft" if softmax else ""))
     feat = L.CFG["feat"] if feat is None else feat
     use_h = L.CFG["use_h"] if use_h is None else use_h
-    m = L.GramSC(U, L.CFG["hidden"], softmax=softmax, feat=feat, use_h=use_h)
+    m = L.GramSC(U, L.CFG["hidden"], softmax=softmax, feat=feat, use_h=use_h, use_rho=use_rho, K=K)
     m.load_state_dict(torch.load(CKPT / f"{name}.pt", map_location=L.DEVICE, weights_only=True))
     return m.to(L.DEVICE).eval()
 
@@ -53,6 +53,13 @@ def train_tlc(U, d, data_fn, iters=600, seed=1):
     linear scheme without side information)."""
     tlc = L.TLC(U)
     return L.train_receiver(tlc, U, d, iters if not QUICK else 50, 256, 1e-2, seed,
+                            data_fn=data_fn, log=None)
+
+
+def train_tlc_g(U, d, data_fn, iters=600, seed=1):
+    """Gain-scaled static combiner (TLC-g), same loss and budget as TLC."""
+    m = L.TLCg(U)
+    return L.train_receiver(m, U, d, iters if not QUICK else 50, 256, 1e-2, seed,
                             data_fn=data_fn, log=None)
 
 
