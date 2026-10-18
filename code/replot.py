@@ -203,7 +203,7 @@ def fig_weights():
                         arrowprops=dict(arrowstyle="-", lw=0.7, color="0.35", shrinkB=3))
     hb = [Line2D([], [], color=STY["SC"][1], ls=STY["SC"][3], marker=STY["SC"][2], label="Proposed SC"),
           Line2D([], [], color=STY["LMMSE"][1], ls=STY["LMMSE"][3], label="Genie-aided LMMSE")]
-    ax.set_xlabel("per-user SNR (dB)"); ax.set_ylabel("weight $[\\mathbf{W}]_{uv}$")
+    ax.set_xlabel("per-user SNR (dB)"); ax.set_ylabel("mean off-diagonal weight")
     ax.set_xlim(-6, 24); ax.set_ylim(-2.3, 0.75)
     d = dict(framealpha=0.95, handlelength=1.6, labelspacing=0.22, handletextpad=0.4, borderpad=0.3,
              borderaxespad=0.2, loc="lower left")
