@@ -353,9 +353,20 @@ def _shared_legend(fig, axs, name, ncol, fs=6.4):
                 hs.append(hh); ls.append(ll)
     rank = {STY[k][0]: i for i, k in enumerate(ORDER)}
     idx = sorted(range(len(ls)), key=lambda i: rank.get(ls[i], 99))
-    fig.legend([hs[i] for i in idx], [ls[i] for i in idx], loc="lower center", ncol=ncol,
-               frameon=True, framealpha=0.95, handlelength=1.6, labelspacing=0.25,
-               handletextpad=0.4, columnspacing=0.8, borderaxespad=0.1, fontsize=fs)
+    # centered under the axes box (not the canvas), so the legend aligns with the plot;
+    # spacing and font shrink in steps until the centered box fits inside the canvas
+    x0 = min(a.get_position().x0 for a in axs); x1 = max(a.get_position().x1 for a in axs)
+    for fs_, hl, cs_, htp in [(fs, 1.6, 0.8, 0.4), (fs, 1.3, 0.6, 0.3), (fs - 0.5, 1.2, 0.5, 0.3), (fs - 1.0, 1.1, 0.4, 0.25)]:
+        for lg_ in list(fig.legends):
+            lg_.remove()
+        fig.legend([hs[i] for i in idx], [ls[i] for i in idx], loc="lower center", ncol=ncol,
+                   bbox_to_anchor=((x0 + x1) / 2, 0.0),
+                   frameon=True, framealpha=0.95, handlelength=hl, labelspacing=0.25,
+                   handletextpad=htp, columnspacing=cs_, borderaxespad=0.1, fontsize=fs_)
+        fig.canvas.draw(); r = fig.canvas.get_renderer(); F = fig.bbox
+        Lb = fig.legends[0].get_window_extent(r)
+        if Lb.x0 >= F.x0 and Lb.x1 <= F.x1:
+            break
     fig.canvas.draw()
     r = fig.canvas.get_renderer(); F = fig.bbox
     for ax in axs:
