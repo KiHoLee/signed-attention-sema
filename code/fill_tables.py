@@ -73,7 +73,7 @@ def main():
     # ------------------------------------------------ scaling in U and d (one table)
     D = rows("scaling_d.csv"); Ur = rows("scaling_U.csv")
     L.append("% ---- Table: scaling (generated) ----")
-    L.append("\\begin{table}[!t]\n\\centering\n\\caption{Cosine Recovery Versus User Count ($d=64$) and SER Versus Embedding Dimension ($U=4$) at $\\beta=0.64$, With SC$_{64}$ and SC$_{256}$ Trained at $d=64$ and $d=256$ and Applied Unchanged}\n\\label{tab:dim}\n\\scriptsize\n\\setlength{\\tabcolsep}{0.9pt}\n\\renewcommand{\\arraystretch}{1.0}")
+    L.append("\\begin{table}[!t]\n\\centering\n\\caption{Cosine Recovery Versus User Count ($d=64$) and SER Versus Embedding Dimension ($U=4$) at $\\beta=0.64$}\n\\label{tab:dim}\n\\scriptsize\n\\setlength{\\tabcolsep}{0.9pt}\n\\renewcommand{\\arraystretch}{1.0}")
     cols = ["SC", "LMMSE", "MOM", "SR", "MF", "OMA"]
     L.append("\\begin{tabular}{l" + "c" * len(cols) + "}\n\\toprule")
     L.append(" & " + " & ".join(LAB[c] for c in cols) + " \\\\\n\\midrule")
@@ -104,7 +104,7 @@ def main():
                  % (len(cols) + 1, nm, st["beta_mean"], st["beta_std"], 100 * st["rank1_mean"], S[key]["probe_acc_clean_eval_groups"]))
         for snr in [0, 10]:
             L.append(f"SER, {snr}~dB & " + " & ".join(ser(g(R[snr], c, "ser")) for c in cols) + " \\\\")
-        for snr in ([0, 10] if key.startswith("ag_news_bert") else ([10] if key.startswith("sst2") else [])):
+        for snr in ([0, 10] if key.startswith("ag_news_bert") else []):
             L.append(f"accuracy, {snr}~dB & " + " & ".join(cs(g(R[snr], c, "acc")) for c in cols) + " \\\\")
     L.append("\\bottomrule\n\\end{tabular}\n\\end{table*}\n")
     OUT.write_text("\n".join(L) + "\n")
