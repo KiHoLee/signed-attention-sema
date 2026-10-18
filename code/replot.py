@@ -25,12 +25,12 @@ plt.rcParams.update({
     "xtick.labelsize": 7.5, "ytick.labelsize": 7.5,
     "axes.grid": True, "grid.linestyle": "--", "grid.linewidth": 0.4, "grid.alpha": 0.6,
     "lines.linewidth": 1.2, "lines.markersize": 3.4,
-    "figure.figsize": (3.5, 2.0625 + 0.45), "pdf.fonttype": 42,
+    "figure.figsize": (2.975, 1.753125 + 0.45), "pdf.fonttype": 42,
 })
 # every result figure: 3.5 in canvas (the printed column width) and one axes
 # box of 2.75 x 2.0625 in (8:6); figures with the legend below the axes add
 # 0.68 in of canvas for the legend
-CW, AX_W, AX_H = 3.5, 2.75, 2.0625
+CW, AX_W, AX_H = 2.975, 2.3375, 1.753125   # printed at 0.85 column width (standard floor), 8:6 box
 CH, CH_LEG = AX_H + 0.45, AX_H + 0.45 + 0.62
 AXES_RECT = dict(left=0.64 / CW, right=(0.64 + AX_W) / CW, top=1 - 0.05 / CH, bottom=0.40 / CH)
 AXES_RECT_LEG = dict(left=0.64 / CW, right=(0.64 + AX_W) / CW, top=1 - 0.05 / CH_LEG, bottom=1.02 / CH_LEG)
@@ -356,16 +356,22 @@ def _shared_legend(fig, axs, name, ncol, fs=6.4):
     # centered under the axes box (not the canvas), so the legend aligns with the plot;
     # spacing and font shrink in steps until the centered box fits inside the canvas
     x0 = min(a.get_position().x0 for a in axs); x1 = max(a.get_position().x1 for a in axs)
-    for fs_, hl, cs_, htp in [(fs, 1.6, 0.8, 0.4), (fs, 1.3, 0.6, 0.3), (fs - 0.5, 1.2, 0.5, 0.3), (fs - 1.0, 1.1, 0.4, 0.25)]:
-        for lg_ in list(fig.legends):
-            lg_.remove()
-        fig.legend([hs[i] for i in idx], [ls[i] for i in idx], loc="lower center", ncol=ncol,
-                   bbox_to_anchor=((x0 + x1) / 2, 0.0),
-                   frameon=True, framealpha=0.95, handlelength=hl, labelspacing=0.25,
-                   handletextpad=htp, columnspacing=cs_, borderaxespad=0.1, fontsize=fs_)
-        fig.canvas.draw(); r = fig.canvas.get_renderer(); F = fig.bbox
-        Lb = fig.legends[0].get_window_extent(r)
-        if Lb.x0 >= F.x0 and Lb.x1 <= F.x1:
+    steps = [(fs, 1.6, 0.8, 0.4), (fs, 1.3, 0.6, 0.3), (fs - 0.5, 1.2, 0.5, 0.3), (fs - 1.0, 1.1, 0.4, 0.25)]
+    # first centered under the axes box; if no spacing fits, centered on the canvas
+    placed = False
+    for xc in [(x0 + x1) / 2, 0.5]:
+        for fs_, hl, cs_, htp in steps:
+            for lg_ in list(fig.legends):
+                lg_.remove()
+            fig.legend([hs[i] for i in idx], [ls[i] for i in idx], loc="lower center", ncol=ncol,
+                       bbox_to_anchor=(xc, 0.0),
+                       frameon=True, framealpha=0.95, handlelength=hl, labelspacing=0.25,
+                       handletextpad=htp, columnspacing=cs_, borderaxespad=0.1, fontsize=fs_)
+            fig.canvas.draw(); r = fig.canvas.get_renderer(); F = fig.bbox
+            Lb = fig.legends[0].get_window_extent(r)
+            if Lb.x0 >= F.x0 and Lb.x1 <= F.x1:
+                placed = True; break
+        if placed:
             break
     fig.canvas.draw()
     r = fig.canvas.get_renderer(); F = fig.bbox
