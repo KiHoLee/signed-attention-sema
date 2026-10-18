@@ -107,6 +107,13 @@ def evaluate(Ztr, Zte, ytr, yte, n_classes, grp_sup, grp_eval, Bsig, snr, models
     yg = yte[grp_eval]                            # (n,U)
     n = len(grp_eval)
     chunk = int(os.environ.get("SEMA_EVAL_CHUNK", "2000"))
+    rho_inv = None
+    if "SCrho" in models:                         # long-term noise estimate from K training-group blocks at this SNR
+        K = models["SCrho"].K
+        idx = torch.randint(0, len(grp_sup), (K,), generator=g, device=L.DEVICE)
+        E2 = Ztr[grp_sup[idx]]; h2 = L.sample_gains(K, U, g)
+        t2 = L.transmit_receive(E2, L.signatures(Bsig), h2, snr, g)
+        rho_inv = L.noise_estimate(t2, Bsig, h2).mean()
     for r in range(REP):
         for i in range(0, n, chunk):
             E = Zte[grp_eval[i:i + chunk]]
@@ -117,6 +124,10 @@ def evaluate(Ztr, Zte, ytr, yte, n_classes, grp_sup, grp_eval, Bsig, snr, models
             out = {}
             out["SC"] = models["SC"](t, h); out["SCsoft"] = models["SCsoft"](t, h); out["ATT"] = models["ATT"](t)
             out["TLC"] = models["TLC"](t)
+            if "SCrho" in models:
+                out["SCrho"] = models["SCrho"](t, h, rho_inv.expand(len(E)))
+            if "TLCg" in models:
+                out["TLCg"] = models["TLCg"](t, h)
             out["LMMSE"] = L.rx_lmmse(t, Bsig, h, snr)[0]
             out["MOM"] = L.rx_lmmse_mom(t, Bsig, h)[0]
             out["SR"] = L.rx_sr(t, Bsig, h); out["MF"] = L.rx_mf(t)
@@ -124,7 +135,7 @@ def evaluate(Ztr, Zte, ytr, yte, n_classes, grp_sup, grp_eval, Bsig, snr, models
             to = L.transmit_receive(E, I, h, snr, g)
             out["OMA"] = L.rx_mf(to)
             out["OMAL"] = L.rx_lmmse(to, I, h, snr, Bsig)[0]
-            if Cx is not None:
+            if Cx is not None and not os.environ.get("SEMA_SKIP_EMP"):
                 out["LMMSEe"] = L.rx_lmmse_empirical(t, Cx.unsqueeze(0).expand(len(E), U * d, U * d), Bsig, h, snr)
             res = {}
             for m, eh in out.items():
@@ -167,14 +178,19 @@ def main():
                 idx = torch.randint(0, len(grp_sup), (batch,), generator=gg, device=L.DEVICE)
                 return Ztr[grp_sup[idx]], Bsig, L.sample_gains(batch, U, gg), snr
             models["TLC"] = train_tlc(U, d, data_fn)
+            if os.environ.get("SEMA_VARIANTS"):
+                models["SCrho"] = load_sc(U, tag="gramsc_U4_d64_s1_rho", use_rho=True, K=1000)
+                models["TLCg"] = train_tlc_g(U, d, data_fn)
             res = evaluate(Ztr, Zte, ytr, yte, ncls, grp_sup, grp_eval, Bsig, snr, models, Cx, probe,
                            L.gen(9100 + snr), tau)
             row = {"snr": snr, "n_decisions": res["SC"]["n"]}
-            for m in WHICH + ["LMMSEe"]:
+            for m in WHICH + ["LMMSEe", "SCrho", "TLCg"]:
+                if m not in res:
+                    continue
                 for k in ["ser", "cos", "acc"]:
                     row[f"{k}_{m}"] = res[m][k]
             rows.append(row)
-            print(f"[{key} {snr:3d} dB] " + " ".join(f"{m}:{res[m]['ser']:.2e}" for m in WHICH + ["LMMSEe"])
+            print(f"[{key} {snr:3d} dB] " + " ".join(f"{m}:{res[m]['ser']:.2e}" for m in WHICH + ["LMMSEe", "SCrho", "TLCg"] if m in res)
                   + f" acc SC {res['SC']['acc']:.3f} OMA {res['OMA']['acc']:.3f} ({time.time()-t0:.0f}s)", flush=True)
         with open(DATA / f"real_{key}_snr{SUFFIX}.csv", "w", newline="") as f:
             w = csv.DictWriter(f, fieldnames=list(rows[0].keys())); w.writeheader(); w.writerows(rows)

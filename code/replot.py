@@ -303,9 +303,11 @@ def fig_sigdesign():
 def fig_real(metric="ser"):
     rs = rows("real_ag_news_bert-base-uncased_snr.csv")
     snr = col(rs, "snr")
-    fig, ax = plt.subplots(figsize=(CW, CH_LEG))
-    fig.subplots_adjust(**AXES_RECT_LEG)
-    keys = ["SC", "SCsoft", "ATT", "TLC", "LMMSEe", "LMMSE", "MOM", "SR", "MF", "OMA", "OMAL"]
+    H5 = CH_LEG + 0.16                       # thirteen schemes: five legend rows
+    fig, ax = plt.subplots(figsize=(CW, H5))
+    rect = dict(AXES_RECT_LEG); rect["top"] = 1 - 0.05 / H5; rect["bottom"] = 1.18 / H5
+    fig.subplots_adjust(**rect)
+    keys = ["SC", "SCrho", "SCsoft", "ATT", "TLC", "TLCg", "LMMSEe", "LMMSE", "MOM", "SR", "MF", "OMA", "OMAL"]
     for k in keys:
         if f"{metric}_{k}" not in rs[0]:
             continue
