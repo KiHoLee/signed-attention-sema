@@ -57,7 +57,7 @@ STY = {
     "cf_oma":   ("OMA, closed form",   "#7f8c8d", "", ":"),
     "cf_omal":  ("OMA + LMMSE, closed form", "#566573", "", "-."),
 }
-ORDER = ["SC", "SCrho", "SCsoft", "ATT", "TLC", "TLCg", "LMMSE", "MOM", "LMMSEe", "SR", "MF", "OMA", "OMAL",
+ORDER = ["SC", "SCrho", "SCsoft", "ATT", "TLC", "TLCg", "LMMSE", "LMMSEe", "MOM", "SR", "MF", "OMA", "OMAL",
          "cf_lmmse", "cf_sr", "cf_oma", "cf_omal"]
 
 
