@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 OUT = ROOT / "tables_gen.tex"
 
-LAB = {"SC": "SC", "SCh": "SC-g", "SCsgn": "SC-s", "SCsoft": "SC-soft", "ATT": "Attention", "TLC": "TLC", "LMMSE": "LMMSE",
+LAB = {"SC": "SC", "SCh": "SC-g", "SCsgn": "SC-s", "SCsoft": "Softmax SC", "ATT": "Attention receiver", "TLC": "TLC", "LMMSE": "LMMSE",
        "LMMSEe": "LMMSE-emp", "LMMSEg": "Pair genie", "MOM": "Moment LMMSE", "SR": "SR", "MF": "MF",
        "OMA": "OMA", "OMAL": "OMA + LMMSE"}
 
