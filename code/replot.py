@@ -32,8 +32,9 @@ plt.rcParams.update({
 # 0.68 in of canvas for the legend
 CW, AX_W, AX_H = 2.975, 2.3375, 1.753125   # printed at 0.85 column width (standard floor), 8:6 box
 CH, CH_LEG = AX_H + 0.45, AX_H + 0.45 + 0.62
-AXES_RECT = dict(left=0.64 / CW, right=(0.64 + AX_W) / CW, top=1 - 0.05 / CH, bottom=0.40 / CH)
-AXES_RECT_LEG = dict(left=0.64 / CW, right=(0.64 + AX_W) / CW, top=1 - 0.05 / CH_LEG, bottom=1.02 / CH_LEG)
+AX_L = 0.56   # left margin in inches; leaves 0.08 in on the right so the last x tick label is not cut
+AXES_RECT = dict(left=AX_L / CW, right=(AX_L + AX_W) / CW, top=1 - 0.05 / CH, bottom=0.40 / CH)
+AXES_RECT_LEG = dict(left=AX_L / CW, right=(AX_L + AX_W) / CW, top=1 - 0.05 / CH_LEG, bottom=1.02 / CH_LEG)
 
 # label, color, marker, linestyle  (one triple per scheme, every figure)
 STY = {
@@ -116,9 +117,14 @@ def save(fig, name, inset=None, rect=None):
     r = fig.canvas.get_renderer()
     F = fig.bbox
     for ax in fig.axes:
-        for t in (ax.xaxis.label, ax.yaxis.label):
+        xl, yl = sorted(ax.get_xlim()), sorted(ax.get_ylim())
+        shown = [t for t in ax.get_xticklabels() if xl[0] <= t.get_position()[0] <= xl[1]] + \
+                [t for t in ax.get_yticklabels() if yl[0] <= t.get_position()[1] <= yl[1]]
+        for t in [ax.xaxis.label, ax.yaxis.label] + shown:
+            if not t.get_text():
+                continue
             b = t.get_window_extent(r)
-            if b.x0 < F.x0 or b.y0 < F.y0 or b.x1 > F.x1 or b.y1 > F.y1:
+            if b.x0 < F.x0 - 0.5 or b.y0 < F.y0 - 0.5 or b.x1 > F.x1 + 0.5 or b.y1 > F.y1 + 0.5:
                 raise RuntimeError(f"{name}: clipped label {t.get_text()}")
         if inset is not None and ax is fig.axes[0]:
             hit = _overlaps(ax, inset.get_window_extent(r).expanded(1.03, 1.06), r)
@@ -164,15 +170,21 @@ def fig_theory():
     rs = rows("theory_snr.csv")
     snr = col(rs, "snr")
     fig, ax = plt.subplots()
-    for k in ["cf_lmmse", "cf_sr", "cf_oma", "cf_omal"]:
-        plot(ax, snr, col(rs, k), k, ax.semilogy)
-    for k, mk, c in [("mc_lmmse", "v", STY["LMMSE"][1]), ("mc_sr", "s", STY["SR"][1]),
-                     ("mc_omal", "d", STY["OMAL"][1]), ("mc_oma", "^", STY["OMA"][1])]:
-        ax.semilogy(snr, col(rs, k), ls="none", marker=mk, color=c, markerfacecolor="none", label="_nolegend_")
-    ax.semilogy([], [], ls="none", marker="o", color="k", markerfacecolor="none", label="Monte Carlo")
+    # closed form as a line, Monte Carlo as the scheme's own hollow marker;
+    # one legend entry per scheme shows both, so every marker is explained
+    hb = []
+    for cf, mc, k in [("cf_lmmse", "mc_lmmse", "LMMSE"), ("cf_sr", "mc_sr", "SR"),
+                      ("cf_oma", "mc_oma", "OMA"), ("cf_omal", "mc_omal", "OMAL")]:
+        lb, c, mk, _ = STY[k]
+        ls = STY[cf][3]
+        ax.semilogy(snr, col(rs, cf), color=c, ls=ls, label="_nolegend_")
+        ax.semilogy(snr, col(rs, mc), ls="none", marker=mk, color=c, markerfacecolor="none", label="_nolegend_")
+        hb.append(Line2D([], [], color=c, ls=ls, marker=mk, markerfacecolor="none", label=lb))
     ax.set_xlabel("per-user SNR (dB)"); ax.set_ylabel("per-user MSE")
     ax.set_xlim(-10, 30); ax.set_ylim(1e-3, 2e3)
-    legend(ax, loc="upper right")
+    d = dict(framealpha=0.95, handlelength=2.2, labelspacing=0.22, handletextpad=0.4, borderpad=0.3,
+             borderaxespad=0.2, loc="upper right")
+    ax.legend(hb, [h.get_label() for h in hb], **d); ax._legend_spec = (hb, [h.get_label() for h in hb], d)
     save(fig, "fig_theory")
 
 
@@ -230,7 +242,7 @@ def fig_snr(metric="ser"):
     ax.set_xlabel("per-user SNR (dB)")
     ax.set_ylabel("SER" if metric == "ser" else "cosine distortion $1-\\cos$")
     ax.set_xlim(-6, 24)
-    ax.set_ylim(1e-6, 1.5) if metric == "ser" else ax.set_ylim(5e-3, 1)
+    ax.set_ylim(1e-6, 1.5) if metric == "ser" else ax.set_ylim(5e-3, 1.3)
     fig.set_size_inches(CW, CH_LEG); fig.subplots_adjust(**AXES_RECT_LEG)
     _shared_legend(fig, [ax], f"fig_snr_{metric}", 3, fs=7)
 
@@ -376,9 +388,14 @@ def _shared_legend(fig, axs, name, ncol, fs=6.4):
     fig.canvas.draw()
     r = fig.canvas.get_renderer(); F = fig.bbox
     for ax in axs:
-        for t in (ax.xaxis.label, ax.yaxis.label):
+        xl, yl = sorted(ax.get_xlim()), sorted(ax.get_ylim())
+        shown = [t for t in ax.get_xticklabels() if xl[0] <= t.get_position()[0] <= xl[1]] + \
+                [t for t in ax.get_yticklabels() if yl[0] <= t.get_position()[1] <= yl[1]]
+        for t in [ax.xaxis.label, ax.yaxis.label] + shown:
+            if not t.get_text():
+                continue
             b = t.get_window_extent(r)
-            if b.x0 < F.x0 or b.y0 < F.y0 or b.x1 > F.x1 or b.y1 > F.y1:
+            if b.x0 < F.x0 - 0.5 or b.y0 < F.y0 - 0.5 or b.x1 > F.x1 + 0.5 or b.y1 > F.y1 + 0.5:
                 raise RuntimeError(f"{name}: clipped label {t.get_text()}")
         for lg in fig.legends:
             Lb = lg.get_window_extent(r)
