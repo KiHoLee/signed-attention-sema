@@ -128,6 +128,29 @@ def main():
         for snr in ([0, 10] if key.startswith("ag_news_bert") else []):
             L.append(f"accuracy, {snr}~dB & " + " & ".join(cs(g(R[snr], c, "acc")) for c in cols) + " \\\\")
     L.append("\\bottomrule\n\\end{tabular}\n\\end{table*}\n")
+    # ------------------------------------------------ orthogonal signatures (code/exp_longterm.py)
+    LT = DATA / "longterm"
+    if (LT / "synth_orth.csv").exists() and (LT / "real_orth.csv").exists():
+        so = {int(r["snr"]): r for r in rows(LT / "synth_orth.csv")}
+        sm = {int(r["snr"]): r for r in rows(LT / "synth_matched.csv")}
+        ro = {int(r["snr"]): r for r in rows(LT / "real_orth.csv")}
+        rm = {int(r["snr"]): r for r in rows(LT / "real_lt.csv")}
+        co = ["SC", "SClt", "SCltb", "PLG", "OMAL"]
+        lab = {"SC": "SC", "SClt": "SC-a", "SCltb": "SC-a$_{\\mathrm{s}}$", "PLG": "Plug-in", "MF": "MF", "OMAL": "OMA+LMMSE"}
+        L.append("% ---- Table: orthogonal signatures (generated) ----")
+        L.append("\\begin{table}[!t]\n\\centering\n\\caption{SER With Orthogonal Signatures, Which Need No Similarity at Any Node, and With Matched Signatures and the Plug-In Receiver for Reference ($U=4$, $d=64$)}\n\\label{tab:orth}\n\\scriptsize\n\\setlength{\\tabcolsep}{1.2pt}\n\\renewcommand{\\arraystretch}{1.0}")
+        L.append("\\begin{tabular}{l" + "c" * (len(co) + 1) + "}\n\\toprule")
+        L.append(" & \\multicolumn{%d}{c}{Orthogonal signatures} & Matched \\\\" % len(co))
+        L.append("\\cmidrule(lr){2-%d}\\cmidrule(lr){%d-%d}" % (len(co) + 1, len(co) + 2, len(co) + 2))
+        L.append(" & " + " & ".join(lab[c] for c in co) + " & Plug-in \\\\\n\\midrule")
+        L.append("\\multicolumn{%d}{l}{\\emph{Synthetic model, jittered share coefficients}} \\\\" % (len(co) + 2))
+        for snr in [0, 4, 10]:
+            L.append(f"{snr}~dB & " + " & ".join(ser(g(so[snr], c, "ser")) for c in co) + " & " + ser(g(sm[snr], "PLG", "ser")) + " \\\\")
+        L.append("\\multicolumn{%d}{l}{\\emph{AG News, BERT}} \\\\" % (len(co) + 2))
+        for snr in [0, 4, 10]:
+            L.append(f"{snr}~dB & " + " & ".join(ser(g(ro[snr], c, "ser")) for c in co) + " & " + ser(g(rm[snr], "PLG", "ser")) + " \\\\")
+        L.append("accuracy, 0~dB & " + " & ".join(cs(g(ro[0], c, "acc")) for c in co) + " & " + cs(g(rm[0], "PLG", "acc")) + " \\\\")
+        L.append("\\bottomrule\n\\end{tabular}\n\\end{table}\n")
     body = "\n".join(L) + "\n"
     src = MAIN.read_text()
     i = src.index(BEGIN); i = src.index("\n", i) + 1

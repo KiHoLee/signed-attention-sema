@@ -321,11 +321,13 @@ class GramSC(nn.Module):
     already uses). softmax=True gives the convex twin: W(T) = softmax_rows
     (f_theta), identical architecture, weights confined to the simplex."""
     def __init__(self, U: int, hidden: int = 64, softmax: bool = False,
-                 feat: str = "raw", use_h: bool = False, use_rho: bool = False, K: int = 1000):
+                 feat: str = "raw", use_h: bool = False, use_rho: bool = False, K: int = 1000,
+                 use_bs: bool = False):
         super().__init__()
         self.U, self.softmax, self.feat, self.use_h = U, softmax, feat, use_h
         self.use_rho, self.K = use_rho, K    # SC-rho: one extra input, log of a long-term noise estimate
-        n_in = U * U + (U if feat == "norm" else 0) + (U if use_h else 0) + (1 if use_rho else 0)
+        self.use_bs = use_bs                 # SC-b: also reads the signature Gram B_s (front-end knowledge)
+        n_in = U * U + (U if feat == "norm" else 0) + (U if use_h else 0) + (1 if use_rho else 0) + (U * U if use_bs else 0)
         self.score = nn.Sequential(nn.Linear(n_in, hidden), nn.ReLU(),
                                    nn.Linear(hidden, hidden), nn.ReLU(),
                                    nn.Linear(hidden, U * U))
@@ -335,7 +337,7 @@ class GramSC(nn.Module):
             if softmax:   # start near the identity: large diagonal logits
                 self.score[-1].bias.copy_(4.0 * torch.eye(U).reshape(-1))
 
-    def features(self, t, h=None, rho_inv=None):
+    def features(self, t, h=None, rho_inv=None, bs=None):
         """The score network reads the Gram T = t t^T (sum over the d
         coordinates, not the mean), whose entries are free of d:
         E[T] = Gam B Gam^T + rho^{-1} H^{-1} Bs H^{-1}.
@@ -354,17 +356,21 @@ class GramSC(nn.Module):
         if self.use_rho:
             assert rho_inv is not None, "this receiver reads a long-term noise estimate"
             f.append(torch.log(rho_inv.clamp(min=1e-6)).reshape(B_, 1))
+        if self.use_bs:
+            assert bs is not None, "this receiver reads the signature Gram"
+            bs = bs if bs.dim() == 3 else bs.unsqueeze(0).expand(B_, U, U)
+            f.append(bs.reshape(B_, U * U))
         return torch.cat(f, dim=1)
 
-    def weights(self, t, h=None, rho_inv=None):
+    def weights(self, t, h=None, rho_inv=None, bs=None):
         B_, U, d = t.shape
-        W = self.score(self.features(t, h, rho_inv)).reshape(B_, U, U)
+        W = self.score(self.features(t, h, rho_inv, bs)).reshape(B_, U, U)
         if self.softmax:
             return torch.softmax(W, dim=2)
         return W + torch.eye(U, device=t.device, dtype=t.dtype)
 
-    def forward(self, t, h=None, rho_inv=None):
-        W = self.weights(t, h, rho_inv)
+    def forward(self, t, h=None, rho_inv=None, bs=None):
+        W = self.weights(t, h, rho_inv, bs)
         return _nrm(torch.einsum('bui,bid->bud', W, t))
 
 
