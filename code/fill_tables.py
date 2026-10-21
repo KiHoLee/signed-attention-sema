@@ -48,6 +48,12 @@ def ser4(v):
     return "-" if v is None else f"${v * 1e4:.1f}$"
 
 
+def ser4b(v):
+    """SER scaled by 1e4 with two decimals (dimension block of Table IV, where
+    the values at large d fall below 1 and one decimal would misstate ratios)."""
+    return "-" if v is None else f"${v * 1e4:.2f}$"
+
+
 def cs(v):
     return "-" if v is None else f"${v:.3f}$"
 
@@ -70,7 +76,7 @@ def main():
     names = [("sym", "Symmetric, Rayleigh"), ("asym", "Asymmetric"), ("nearfar", "Near-far"),
              ("twoclust", "Two scenes"), ("negcorr", "Negative correlation")]
     L.append("% ---- Table: profiles (generated) ----")
-    L.append("\\begin{table*}[!t]\n\\centering\n\\caption{SER at $0$~dB and Cosine Recovery at $10$~dB Under Heterogeneous, Out-of-Distribution, and Block-Varying Similarity Profiles ($U=4$, $d=64$). The Block-Varying Rows Give Both Metrics at the SNR of the Row, and Dashes Mark Combinations Not Evaluated.}\n\\label{tab:profiles}\n\\scriptsize\n\\setlength{\\tabcolsep}{2.2pt}\n\\renewcommand{\\arraystretch}{1.0}")
+    L.append("\\begin{table*}[!t]\n\\centering\n\\caption{SER at $0$~dB and Cosine Recovery at $10$~dB Under Heterogeneous, Out-of-Distribution, and Block-Varying Similarity Profiles ($U=4$, $d=64$). The Block-Varying Rows Give Both Metrics at the SNR of the Row, and Hyphens Mark Combinations Not Evaluated}\n\\label{tab:profiles}\n\\scriptsize\n\\setlength{\\tabcolsep}{2.2pt}\n\\renewcommand{\\arraystretch}{1.0}")
     L.append("\\begin{tabular}{l" + "c" * (len(c0) + len(c1)) + "}\n\\toprule")
     L.append(" & \\multicolumn{%d}{c}{SER $(\\times10^{-4})$} & \\multicolumn{%d}{c}{Cosine recovery} \\\\" % (len(c0), len(c1)))
     L.append("\\cmidrule(lr){2-%d}\\cmidrule(lr){%d-%d}" % (len(c0) + 1, len(c0) + 2, len(c0) + len(c1) + 1))
@@ -103,7 +109,7 @@ def main():
     L.append("\\midrule\n" + " & " + " & ".join(lab.get(c, LAB.get(c, c)) for c in cols2) + " \\\\")
     L.append("\\multicolumn{%d}{l}{\\emph{SER $(\\times10^{-4})$ at $0$~dB versus $d$}} \\\\" % (len(cols) + 1))
     for r in [x for x in D if x["snr"] == 0.0]:
-        L.append(f"$d={int(r['d'])}$ & " + " & ".join(ser4(g(r, c, "ser")) for c in cols2) + " \\\\")
+        L.append(f"$d={int(r['d'])}$ & " + " & ".join(ser4b(g(r, c, "ser")) for c in cols2) + " \\\\")
     L.append("\\bottomrule\n\\end{tabular}\n\\end{table}\n")
     # ------------------------------------------------ real corpora
     S = json.load(open(DATA / "real_stats.json"))
