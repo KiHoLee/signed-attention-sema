@@ -39,6 +39,7 @@ Simulation code, result data, and figures for
 | Floor points of Figs. 5, 7, 8 at 10x blocks (merged into the base files) | `run_floor.sh`, `merge_floor.py` | `*_floor.csv` | |
 | Plug-in LMMSE (overlays in Figs. 5-8, a column of Tables III-V) | `exp_plugin.py snr` / `beta` / `profiles` / `varmix` / `scaling` / `real` | `plugin/*.csv`, `plugin/*.json` |
 | Signatures without similarity (Table VI) | `exp_longterm.py train` / `synth` / `real` | `longterm/*.csv`, `ckpt/gramsc_U4_d64_s1_lt.pt`, `ckpt/gramsc_U4_d64_s1_ltb.pt` |
+| Complexity of the compared receivers (Table VI) | `exp_complexity.py` | `complexity_receivers.csv`, `complexity_receivers.json` |
 | Attention receiver with doubled training (Sec. VI-D) | `exp_train.py att_U4_d64_s1_long`, `exp_att_long.py` | `att_long.csv` |
 | SC-rho and TLC-g variants (TLC-g overlays in Figs. 5-8; SC-rho is not reported in the paper) | `exp_train.py gramsc_U4_d64_s1_rho`, `exp_floor_variants.py snr` / `beta` | `variants_floor/*.csv`, `ckpt/gramsc_U4_d64_s1_rho.pt` | |
 | Text: receiver design study | `exp_variants.py` | `variants*.json` | |
@@ -68,3 +69,22 @@ Hugging Face datasets and models named in the script on first run.
 ## License
 
 MIT for the code (`LICENSE`); result data and figures CC BY 4.0.
+
+## Complexity of the compared receivers (Table VI)
+
+`code/exp_complexity.py` counts the multiply-accumulates (MACs) per block of every compared receiver from explicit operation counts (U = 4, d = 64, n = Ud; formulas in the script and in the `mac_count` column of `data/complexity_receivers.csv`) and times the batched reference implementations on the CPU (median of 7 runs, processor recorded in `data/complexity_receivers.json`). The empirical LMMSE count uses the Kronecker structure of Gamma (x) I_d; the dense count is 55,989,845 MACs. Timings measure these reference implementations, not optimized kernels.
+
+| Receiver | MACs per block | Parameters | CPU time per block (us) |
+|---|---|---|---|
+| Genie-aided LMMSE | 1,557 | 0 | 1.06 |
+| Plug-in LMMSE | 2,923 | 0 | 1.46 |
+| SR | 1,301 | 0 | 0.48 |
+| MF | 256 | 0 | 0.03 |
+| Moment LMMSE | 3,311 | 0 | 2.76 |
+| Proposed SC | 8,868 | 6,544 | 1.88 |
+| Softmax SC | 8,884 | 6,544 | 1.84 |
+| SC-a | 8,868 | 6,544 | 1.84 |
+| Attention receiver | 102,912 | 25,089 | 4.29 |
+| TLC | 1,280 | 16 | 0.16 |
+| TLC-g | 1,792 | 16 | 0.20 |
+| Empirical LMMSE | 22,959,701 | 0 | 343.82 |

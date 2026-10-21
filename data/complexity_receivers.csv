@@ -1,0 +1,13 @@
+receiver,macs_per_block,parameters,cpu_us_per_block,mac_count
+Genie-aided LMMSE,1557,0,1.0562,4.33U^3 + U^2 d + U d
+Plug-in LMMSE,2923,0,1.4564,noise estimate (U^3/3 + U^2 d + U d + U^3) + LMMSE (4.33U^3 + U^2 d) + U d
+SR,1301,0,0.4787,U^3/3 + U^2 d + U d
+MF,256,0,0.0328,U d
+Moment LMMSE,3311,0,2.7564,Gram U^2 d + whitening 2.33U^3 + eigendecomposition ~9U^3 + LMMSE 4.33U^3 + U^2 d + U d
+Proposed SC,8868,6544,1.8844,Gram U^2 d + features + parameters + U^2 d + U d
+Softmax SC,8884,6544,1.8428,as SC + U^2 softmax
+SC-a,8868,6544,1.8443,as SC
+Attention receiver,102912,25089,4.2913,"K,V projections 2 U d H d_k + scores and context 2 U^2 H d_k + output U H d_k d + residual + U d"
+TLC,1280,16,0.1626,U^2 d + U d
+TLC-g,1792,16,0.2006,U^2 d + 2 U d + U d
+Empirical LMMSE,22959701,0,343.819,"2 U n^2 + n^3/3 + n^3 + n^2 + U d, n = U d (structured)"
