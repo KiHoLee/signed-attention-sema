@@ -144,10 +144,10 @@ def main():
         L.append("\\cmidrule(lr){2-%d}\\cmidrule(lr){%d-%d}" % (len(co) + 1, len(co) + 2, len(co) + 2))
         L.append(" & " + " & ".join(lab[c] for c in co) + " & Plug-in \\\\\n\\midrule")
         L.append("\\multicolumn{%d}{l}{\\emph{Synthetic model, jittered share coefficients}} \\\\" % (len(co) + 2))
-        for snr in [0, 4, 10]:
+        for snr in [0, 10]:
             L.append(f"{snr}~dB & " + " & ".join(ser(g(so[snr], c, "ser")) for c in co) + " & " + ser(g(sm[snr], "PLG", "ser")) + " \\\\")
         L.append("\\multicolumn{%d}{l}{\\emph{AG News, BERT}} \\\\" % (len(co) + 2))
-        for snr in [0, 4, 10]:
+        for snr in [0, 10]:
             L.append(f"{snr}~dB & " + " & ".join(ser(g(ro[snr], c, "ser")) for c in co) + " & " + ser(g(rm[snr], "PLG", "ser")) + " \\\\")
         L.append("accuracy, 0~dB & " + " & ".join(cs(g(ro[0], c, "acc")) for c in co) + " & " + cs(g(rm[0], "PLG", "acc")) + " \\\\")
         L.append("\\bottomrule\n\\end{tabular}\n\\end{table}\n")
