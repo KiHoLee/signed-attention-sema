@@ -1,4 +1,4 @@
-# Signed user-wise attention for semantic multiple access
+# Semantic embedding multiplexing gain via matched signatures and signed user-wise attention
 
 Simulation code, result data, and figures for
 
