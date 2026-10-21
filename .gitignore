@@ -3,3 +3,4 @@ __pycache__/
 logs/
 out/
 *.log
+.DS_Store
