@@ -14,7 +14,7 @@ BEGIN = "% ---- generated tables begin"
 END = "% ---- generated tables end ----\n"
 
 LAB = {"SC": "SC", "SCh": "SC-g", "SCsgn": "SC-s", "SCsoft": "Softmax SC", "ATT": "Attention receiver", "TLC": "TLC", "LMMSE": "LMMSE",
-       "LMMSEe": "LMMSE-emp", "LMMSEg": "Pair genie", "PLG": "Plug-in", "MOM": "Moment LMMSE", "SR": "SR", "MF": "MF",
+       "LMMSEe": "Empirical LMMSE", "LMMSEg": "Pair genie", "PLG": "Plug-in", "MOM": "Moment LMMSE", "SR": "SR", "MF": "MF",
        "OMA": "OMA", "OMAL": "OMA + LMMSE"}
 
 
