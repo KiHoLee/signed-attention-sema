@@ -136,9 +136,9 @@ def main():
         ro = {int(r["snr"]): r for r in rows(LT / "real_orth.csv")}
         rm = {int(r["snr"]): r for r in rows(LT / "real_lt.csv")}
         co = ["SC", "SClt", "SCltb", "PLG", "OMAL"]
-        lab = {"SC": "SC", "SClt": "SC-a", "SCltb": "SC-a$_{\\mathrm{s}}$", "PLG": "Plug-in", "MF": "MF", "OMAL": "OMA+LMMSE"}
+        lab = {"SC": "SC", "SClt": "SC-a", "SCltb": "SC-a$_{\\mathrm{s}}$", "PLG": "Plug-in", "MF": "MF", "OMAL": "OMA+L"}
         L.append("% ---- Table: orthogonal signatures (generated) ----")
-        L.append("\\begin{table}[!t]\n\\centering\n\\caption{SER With Orthogonal Signatures, Which Need No Similarity at Any Node, and With Matched Signatures and the Plug-In Receiver for Reference ($U=4$, $d=64$)}\n\\label{tab:orth}\n\\scriptsize\n\\setlength{\\tabcolsep}{1.2pt}\n\\renewcommand{\\arraystretch}{1.0}")
+        L.append("\\begin{table}[!t]\n\\centering\n\\caption{SER With Orthogonal Signatures, Which Need No Similarity at Any Node, and With Matched Signatures and the Plug-In Receiver for Reference ($U=4$, $d=64$). OMA+L Is OMA + LMMSE.}\n\\label{tab:orth}\n\\scriptsize\n\\setlength{\\tabcolsep}{2.2pt}\n\\renewcommand{\\arraystretch}{1.0}")
         L.append("\\begin{tabular}{l" + "c" * (len(co) + 1) + "}\n\\toprule")
         L.append(" & \\multicolumn{%d}{c}{Orthogonal signatures} & Matched \\\\" % len(co))
         L.append("\\cmidrule(lr){2-%d}\\cmidrule(lr){%d-%d}" % (len(co) + 1, len(co) + 2, len(co) + 2))
