@@ -59,7 +59,7 @@ STY = {
     "cf_oma":   ("OMA, closed form",   "#7f8c8d", "", ":"),
     "cf_omal":  ("OMA + LMMSE, closed form", "#566573", "", "-."),
 }
-ORDER = ["SC", "SCrho", "SCsoft", "ATT", "TLC", "TLCg", "LMMSE", "PLG", "LMMSEe", "MOM", "SR", "MF", "OMA", "OMAL",
+ORDER = ["SC", "SCrho", "SCsoft", "ATT", "TLC", "TLCg", "PLG", "LMMSE", "LMMSEe", "MOM", "SR", "MF", "OMA", "OMAL",
          "cf_lmmse", "cf_sr", "cf_oma", "cf_omal"]
 
 
@@ -244,14 +244,16 @@ def fig_snr(metric="ser"):
     rs = rows("snr_sweep_b0.64.csv")
     snr = col(rs, "snr")
     fig, ax = plt.subplots()
+    paired = DATA / "plugin" / "snr_b0.64.csv"   # SC, genie, SR, MF, plug-in on identical blocks (code/exp_plugin.py)
+    same = ["SC", "LMMSE", "SR", "MF", "PLG"] if paired.exists() else []
     keys = ["SC", "SCsoft", "ATT", "TLC", "LMMSE", "SR", "MF", "OMA", "OMAL"]
     for k in keys:
-        if f"{metric}_{k}" not in rs[0]:
+        if k in same or f"{metric}_{k}" not in rs[0]:
             continue
         y = col(rs, f"{metric}_{k}") if metric == "ser" else 1 - col(rs, f"cos_{k}")
         plot(ax, snr, floor(y, 1e-6) if metric == "ser" else y, k, ax.semilogy)
     _overlay(ax, metric, "snr", DATA / "variants_floor" / "snr_b0.64.csv", [("TLCg", "TLCg")])      # code/exp_floor_variants.py
-    _overlay(ax, metric, "snr", DATA / "plugin" / "snr_b0.64.csv", [("PLG", "PLG")])                 # code/exp_plugin.py
+    _overlay(ax, metric, "snr", paired, [(k, k) for k in same])
     ax.set_xlabel("per-user SNR (dB)")
     ax.set_ylabel("SER" if metric == "ser" else "cosine distortion $1-\\cos$")
     ax.set_xlim(-6, 24)
@@ -264,15 +266,17 @@ def fig_beta(snr=0, metric="ser"):
     rs = rows(f"beta_sweep_{snr}dB.csv")
     beta = col(rs, "beta")
     fig, ax = plt.subplots()
+    paired = DATA / "plugin" / "beta_0dB.csv"
+    same = ["SC", "LMMSE", "SR", "MF", "PLG"] if (paired.exists() and snr == 0) else []
     keys = ["SC", "SCsoft", "ATT", "TLC", "LMMSE", "SR", "MF", "OMA", "OMAL"]
     for k in keys:
-        if f"{metric}_{k}" not in rs[0]:
+        if k in same or f"{metric}_{k}" not in rs[0]:
             continue
         y = col(rs, f"{metric}_{k}") if metric == "ser" else 1 - col(rs, f"cos_{k}")
         plot(ax, beta, floor(y, 1e-6) if metric == "ser" else y, k, ax.semilogy, markevery=2)
     if snr == 0:
         _overlay(ax, metric, "beta", DATA / "variants_floor" / "beta_0dB.csv", [("TLCg", "TLCg")])
-        _overlay(ax, metric, "beta", DATA / "plugin" / "beta_0dB.csv", [("PLG", "PLG")])
+        _overlay(ax, metric, "beta", paired, [(k, k) for k in same])
     ax.set_xlabel("similarity $\\beta$")
     ax.set_ylabel("SER" if metric == "ser" else "cosine distortion $1-\\cos$")
     ax.set_xlim(0, 0.9)
