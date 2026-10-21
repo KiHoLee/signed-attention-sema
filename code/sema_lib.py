@@ -19,7 +19,8 @@ Conventions (identical to the manuscript)
     M_u^T M_v = beta_uv I_d EXACTLY. Transmit x_u = M_u e_u, ||x_u|| = 1.
   * Channel: r = sum_v h_v M_v e_v + n, n ~ N(0, sigma^2 I_{Lc d}),
     h_v = |CN(0,1)| after phase compensation, floored at H_FLOOR.
-  * Per-user SNR rho = 1/(d sigma^2); per-coordinate SNR rho_c = rho/d.
+  * Per-user SNR rho = 1/(d sigma^2), which equals the per-coordinate SNR (unit-norm
+    embeddings spread energy 1/d per coordinate, despread noise variance sigma^2).
   * Matched filter: t_u = M_u^T r / h_u = e_u + sum_v beta_uv (h_v/h_u) e_v
     + M_u^T n / h_u, with Cov of the despread noise sigma^2 B_uv/(h_u h_v) I.
   * OMA reference: the same chain with orthogonal signatures (C = I_U),

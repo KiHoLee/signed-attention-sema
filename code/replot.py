@@ -190,39 +190,43 @@ def fig_theory():
 
 
 def fig_weights():
-    """Beta is encoded by the shade of one color per scheme, so the proposed
-    receiver keeps its line type, marker, and color of every other figure."""
+    """Off-diagonal weight relative to the diagonal weight, [W]_uv/[W]_uu, for
+    the genie-aided LMMSE receiver (closed form, unit gains) and the proposed
+    receiver (mean off-diagonal over mean diagonal, Rayleigh gains). The ratio
+    removes the row scale that nrm() leaves undetermined in the proposed
+    receiver. Beta is encoded by the shade of one color per scheme, so the
+    proposed receiver keeps its line type, marker, and color of every figure."""
     fig, ax = plt.subplots()
-    ends = []
+    def lmmse_ratio(snr, beta):
+        rho = 10 ** (snr / 10); l1, l2 = L.eig_sym(4, beta)
+        g = lambda lam: lam * rho / (1 + lam ** 2 * rho)
+        return (g(l1) - g(l2)) / (g(l1) + 3 * g(l2))
+    curves = {}
     for beta, al in [(0.3, 0.35), (0.64, 0.65), (0.9, 1.0)]:
         rs = rows(f"snr_sweep_b{beta}.csv")
         snr = col(rs, "snr")
-        rho = 10 ** (snr / 10)
-        l1, l2 = L.eig_sym(4, beta)
-        w = rho * (l1 - l2) * (1 - l1 * l2 * rho) / (4 * (1 + l1 ** 2 * rho) * (1 + l2 ** 2 * rho))
-        ax.plot(snr, w, color=STY["LMMSE"][1], ls=STY["LMMSE"][3], alpha=al, label=f"_lmmse{beta}")
-        ax.plot(snr, col(rs, "SC_offdiag_mean"), color=STY["SC"][1], ls=STY["SC"][3], marker=STY["SC"][2],
-                markevery=2, alpha=al, label=f"_sc{beta}")
+        wl = lmmse_ratio(snr, beta)
+        ws = col(rs, "SC_offdiag_mean") / col(rs, "SC_diag_mean")
+        curves[beta] = (snr, wl, ws)
+        ax.plot(snr, wl, color=STY["LMMSE"][1], ls=STY["LMMSE"][3], alpha=al, label=f"_lmmse{beta}")
+        ax.plot(snr, ws, color=STY["SC"][1], ls=STY["SC"][3], marker=STY["SC"][2], markevery=2, alpha=al, label=f"_sc{beta}")
         ax.axvline(L.snr_boundary_sym(4, beta), color="gray", lw=0.6, alpha=al, label="_guide")
-        ends.append((beta, w[-1]))
     ax.axhline(0, color="k", lw=0.6, label="_guide")
-    # one label per similarity, with a leader to each of its two curves (oracle LMMSE and proposed SC)
-    for (beta, _), xa, xt in zip(ends, [12, 17, 22], [11, 16, 21]):
-        rs = rows(f"snr_sweep_b{beta}.csv"); snr = col(rs, "snr"); rho = 10 ** (snr / 10); l1, l2 = L.eig_sym(4, beta)
-        w = rho * (l1 - l2) * (1 - l1 * l2 * rho) / (4 * (1 + l1 ** 2 * rho) * (1 + l2 ** 2 * rho))
-        for y in (float(np.interp(xa, snr, w)), float(np.interp(xa, snr, col(rs, "SC_offdiag_mean")))):
+    # one label per similarity, with a leader to each of its two curves
+    for beta, xa, xt in zip([0.3, 0.64, 0.9], [12, 17, 22], [11, 16, 21]):
+        snr, wl, ws = curves[beta]
+        for y in (float(np.interp(xa, snr, wl)), float(np.interp(xa, snr, ws))):
             ax.plot(xa, y, marker="o", ms=5.5, mfc="none", mec="k", mew=0.8, ls="none", label="_guide", zorder=5)
-            ax.annotate(f"$\\beta={beta}$", xy=(xa, y), xytext=(xt, 0.45), ha="center", va="center", fontsize=7,
+            ax.annotate(f"$\\beta={beta}$", xy=(xa, y), xytext=(xt, 0.42), ha="center", va="center", fontsize=7,
                         arrowprops=dict(arrowstyle="-", lw=0.7, color="0.35", shrinkB=3))
     hb = [Line2D([], [], color=STY["SC"][1], ls=STY["SC"][3], marker=STY["SC"][2], label="Proposed SC"),
           Line2D([], [], color=STY["LMMSE"][1], ls=STY["LMMSE"][3], label="Genie-aided LMMSE")]
-    ax.set_xlabel("per-user SNR (dB)"); ax.set_ylabel("mean off-diagonal weight")
-    ax.set_xlim(-6, 24); ax.set_ylim(-2.3, 0.75)
+    ax.set_xlabel("per-user SNR (dB)"); ax.set_ylabel("relative off-diagonal weight")
+    ax.set_xlim(-6, 24); ax.set_ylim(-0.42, 0.62)
     d = dict(framealpha=0.95, handlelength=1.6, labelspacing=0.22, handletextpad=0.4, borderpad=0.3,
              borderaxespad=0.2, loc="lower left")
     ax.legend(hb, [h.get_label() for h in hb], **d); ax._legend_spec = (hb, [h.get_label() for h in hb], d)
     save(fig, "fig_weights")
-
 
 def _overlay(ax, metric, xkey, path, pairs):
     """Adds schemes computed by a separate script (same model, same grid) to an axis."""

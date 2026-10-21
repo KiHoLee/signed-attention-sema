@@ -67,12 +67,12 @@ def main():
             if k in V: V[k]["PLG"] = r["PLG"]
     c0 = ["SC", "SCh", "SCsgn", "TLC", "PLG", "LMMSE", "LMMSEg", "MF", "OMA"]
     c1 = ["SC", "TLC", "LMMSE", "MF", "OMA"]
-    names = [("sym", "Symmetric"), ("asym", "Asymmetric"), ("nearfar", "Near-far"),
+    names = [("sym", "Symmetric, Rayleigh"), ("asym", "Asymmetric"), ("nearfar", "Near-far"),
              ("twoclust", "Two scenes"), ("negcorr", "Negative correlation")]
     L.append("% ---- Table: profiles (generated) ----")
-    L.append("\\begin{table*}[!t]\n\\centering\n\\caption{SER at $0$~dB and Cosine Recovery at $10$~dB Under Heterogeneous, Out-of-Distribution, and Block-Varying Similarity Profiles ($U=4$, $d=64$). Dashes Mark Combinations Not Evaluated.}\n\\label{tab:profiles}\n\\scriptsize\n\\setlength{\\tabcolsep}{2.2pt}\n\\renewcommand{\\arraystretch}{1.0}")
+    L.append("\\begin{table*}[!t]\n\\centering\n\\caption{SER at $0$~dB and Cosine Recovery at $10$~dB Under Heterogeneous, Out-of-Distribution, and Block-Varying Similarity Profiles ($U=4$, $d=64$). The Block-Varying Rows Give Both Metrics at the SNR of the Row, and Dashes Mark Combinations Not Evaluated.}\n\\label{tab:profiles}\n\\scriptsize\n\\setlength{\\tabcolsep}{2.2pt}\n\\renewcommand{\\arraystretch}{1.0}")
     L.append("\\begin{tabular}{l" + "c" * (len(c0) + len(c1)) + "}\n\\toprule")
-    L.append(" & \\multicolumn{%d}{c}{SER $(\\times10^{-4})$ at $0$~dB} & \\multicolumn{%d}{c}{Cosine recovery at $10$~dB} \\\\" % (len(c0), len(c1)))
+    L.append(" & \\multicolumn{%d}{c}{SER $(\\times10^{-4})$} & \\multicolumn{%d}{c}{Cosine recovery} \\\\" % (len(c0), len(c1)))
     L.append("\\cmidrule(lr){2-%d}\\cmidrule(lr){%d-%d}" % (len(c0) + 1, len(c0) + 2, len(c0) + len(c1) + 1))
     L.append("Profile & " + " & ".join(LAB[c] for c in c0) + " & " + " & ".join(LAB[c] for c in c1) + " \\\\\n\\midrule")
     for k, nm in names:
@@ -111,7 +111,7 @@ def main():
             ("ag_news_distilbert-base-uncased", "AG News, DistilBERT")]
     cols = ["SC", "PLG", "LMMSE", "LMMSEe", "MOM", "SR", "MF", "OMA"]
     L.append("% ---- Table: real corpora (generated) ----")
-    L.append("\\begin{table*}[!t]\n\\centering\n\\caption{SER and Classification Accuracy at $0$ and $10$~dB on Real Embedding Groups With Their Group Statistics ($U=4$, $d=64$)}\n\\label{tab:real}\n\\scriptsize\n\\setlength{\\tabcolsep}{4pt}\n\\renewcommand{\\arraystretch}{1.0}")
+    L.append("\\begin{table*}[!t]\n\\centering\n\\caption{SER and Classification Accuracy at $0$ and $10$~dB on Real Embedding Groups ($U=4$, $d=64$), With the Mean and Spread $\\bar\\beta$ of the Pairwise Similarity of the Test Groups, the Energy of the Leading Direction, and the Accuracy on Noiseless Embeddings. LMMSE Is Given $\\bar{\\bB}$ and $\\sigma^{2}$}\n\\label{tab:real}\n\\scriptsize\n\\setlength{\\tabcolsep}{4pt}\n\\renewcommand{\\arraystretch}{1.0}")
     L.append("\\begin{tabular}{l" + "c" * len(cols) + "}\n\\toprule")
     L.append(" & " + " & ".join(LAB[c] for c in cols) + " \\\\")
     for key, nm in corp:
