@@ -1,5 +1,6 @@
-"""Generates tables_gen.tex (input by main.tex) from the result files in
-data/, so that no number in a table is typed by hand. Run after the
+"""Writes the generated tables into main_TSP.tex, between the two
+"generated tables" marker comments, from the result files in data/, so that
+no number in a table is typed by hand. Run after the
 experiment queue: python3 code/fill_tables.py
 """
 from __future__ import annotations
@@ -8,10 +9,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
-OUT = ROOT / "tables_gen.tex"
+MAIN = ROOT / "main_TSP.tex"
+BEGIN = "% ---- generated tables begin"
+END = "% ---- generated tables end ----\n"
 
 LAB = {"SC": "SC", "SCh": "SC-g", "SCsgn": "SC-s", "SCsoft": "Softmax SC", "ATT": "Attention receiver", "TLC": "TLC", "LMMSE": "LMMSE",
-       "LMMSEe": "LMMSE-emp", "LMMSEg": "Pair genie", "MOM": "Moment LMMSE", "SR": "SR", "MF": "MF",
+       "LMMSEe": "LMMSE-emp", "LMMSEg": "Pair genie", "PLG": "Plug-in", "MOM": "Moment LMMSE", "SR": "SR", "MF": "MF",
        "OMA": "OMA", "OMAL": "OMA + LMMSE"}
 
 
@@ -54,12 +57,20 @@ def main():
     # ------------------------------------------------ profiles / OOD (one row per profile)
     P = json.load(open(DATA / "profiles.json"))
     V = json.load(open(DATA / "varmix.json"))
-    c0 = ["SC", "SCh", "SCsgn", "TLC", "LMMSE", "LMMSEg", "MOM", "MF", "OMA"]
+    # plug-in LMMSE (code/exp_plugin.py) evaluated on the same block distributions
+    PLG = DATA / "plugin"
+    if (PLG / "profiles.json").exists():
+        for k, r in json.load(open(PLG / "profiles.json")).items():
+            if k in P: P[k]["PLG"] = r["PLG"]
+    if (PLG / "varmix.json").exists():
+        for k, r in json.load(open(PLG / "varmix.json")).items():
+            if k in V: V[k]["PLG"] = r["PLG"]
+    c0 = ["SC", "SCh", "SCsgn", "TLC", "PLG", "LMMSE", "LMMSEg", "MF", "OMA"]
     c1 = ["SC", "TLC", "LMMSE", "MF", "OMA"]
     names = [("sym", "Symmetric"), ("asym", "Asymmetric"), ("nearfar", "Near-far"),
              ("twoclust", "Two scenes"), ("negcorr", "Negative correlation")]
     L.append("% ---- Table: profiles (generated) ----")
-    L.append("\\begin{table*}[!t]\n\\centering\n\\caption{SER at $0$~dB and Cosine Recovery at $10$~dB Under Heterogeneous, Out-of-Distribution, and Block-Varying Similarity Profiles ($U=4$, $d=64$).}\n\\label{tab:profiles}\n\\scriptsize\n\\setlength{\\tabcolsep}{2.2pt}\n\\renewcommand{\\arraystretch}{1.0}")
+    L.append("\\begin{table*}[!t]\n\\centering\n\\caption{SER at $0$~dB and Cosine Recovery at $10$~dB Under Heterogeneous, Out-of-Distribution, and Block-Varying Similarity Profiles ($U=4$, $d=64$). Dashes Mark Combinations Not Evaluated.}\n\\label{tab:profiles}\n\\scriptsize\n\\setlength{\\tabcolsep}{2.2pt}\n\\renewcommand{\\arraystretch}{1.0}")
     L.append("\\begin{tabular}{l" + "c" * (len(c0) + len(c1)) + "}\n\\toprule")
     L.append(" & \\multicolumn{%d}{c}{SER $(\\times10^{-4})$ at $0$~dB} & \\multicolumn{%d}{c}{Cosine recovery at $10$~dB} \\\\" % (len(c0), len(c1)))
     L.append("\\cmidrule(lr){2-%d}\\cmidrule(lr){%d-%d}" % (len(c0) + 1, len(c0) + 2, len(c0) + len(c1) + 1))
@@ -72,16 +83,22 @@ def main():
     L.append("\\bottomrule\n\\end{tabular}\n\\end{table*}\n")
     # ------------------------------------------------ scaling in U and d (one table)
     D = rows("scaling_d.csv"); Ur = rows("scaling_U.csv")
+    for name, key, base in [("scaling_U.csv", "U", Ur), ("scaling_d.csv", "d", D)]:
+        if (PLG / name).exists():
+            for rp in rows(PLG / name):
+                for r in base:
+                    if r[key] == rp[key] and r["snr"] == rp["snr"]:
+                        r["ser_PLG"] = rp["ser_PLG"]; r["cos_PLG"] = rp["cos_PLG"]
     L.append("% ---- Table: scaling (generated) ----")
     L.append("\\begin{table}[!t]\n\\centering\n\\caption{Cosine Recovery Versus User Count ($d=64$) and SER Versus Embedding Dimension ($U=4$) at $\\beta=0.64$}\n\\label{tab:dim}\n\\scriptsize\n\\setlength{\\tabcolsep}{0.9pt}\n\\renewcommand{\\arraystretch}{1.0}")
-    cols = ["SC", "LMMSE", "MOM", "SR", "MF", "OMA"]
+    cols = ["SC", "PLG", "LMMSE", "SR", "MF", "OMA"]
     L.append("\\begin{tabular}{l" + "c" * len(cols) + "}\n\\toprule")
     L.append(" & " + " & ".join(LAB[c] for c in cols) + " \\\\\n\\midrule")
     for snr in [0.0]:
         L.append("\\multicolumn{%d}{l}{\\emph{Cosine recovery versus $U$ at $%d$~dB}} \\\\" % (len(cols) + 1, int(snr)))
         for r in [x for x in Ur if x["snr"] == snr and int(x["U"]) in (2, 4, 6, 8)]:
             L.append(f"$U={int(r['U'])}$ & " + " & ".join(cs(g(r, c, "cos")) for c in cols) + " \\\\")
-    cols2 = ["SC", "SC256", "LMMSE", "MOM", "MF", "OMA"]
+    cols2 = ["SC", "SC256", "PLG", "LMMSE", "MF", "OMA"]
     lab = {"SC": "SC$_{64}$", "SC256": "SC$_{256}$"}
     L.append("\\midrule\n" + " & " + " & ".join(lab.get(c, LAB.get(c, c)) for c in cols2) + " \\\\")
     L.append("\\multicolumn{%d}{l}{\\emph{SER $(\\times10^{-4})$ at $0$~dB versus $d$}} \\\\" % (len(cols) + 1))
@@ -92,7 +109,7 @@ def main():
     S = json.load(open(DATA / "real_stats.json"))
     corp = [("ag_news_bert-base-uncased", "AG News, BERT"), ("sst2_bert-base-uncased", "SST-2, BERT"),
             ("ag_news_distilbert-base-uncased", "AG News, DistilBERT")]
-    cols = ["SC", "LMMSE", "LMMSEe", "MOM", "SR", "MF", "OMA"]
+    cols = ["SC", "PLG", "LMMSE", "LMMSEe", "MOM", "SR", "MF", "OMA"]
     L.append("% ---- Table: real corpora (generated) ----")
     L.append("\\begin{table*}[!t]\n\\centering\n\\caption{SER and Classification Accuracy at $0$ and $10$~dB on Real Embedding Groups With Their Group Statistics ($U=4$, $d=64$)}\n\\label{tab:real}\n\\scriptsize\n\\setlength{\\tabcolsep}{4pt}\n\\renewcommand{\\arraystretch}{1.0}")
     L.append("\\begin{tabular}{l" + "c" * len(cols) + "}\n\\toprule")
@@ -100,6 +117,10 @@ def main():
     for key, nm in corp:
         st = S[key]["nn_eval"]
         R = {int(r["snr"]): r for r in rows(f"real_{key}_snr.csv")}
+        if (PLG / f"real_{key}_snr.csv").exists():
+            for rp in rows(PLG / f"real_{key}_snr.csv"):
+                if int(rp["snr"]) in R:
+                    for kk in ["ser", "cos", "acc"]: R[int(rp["snr"])][f"{kk}_PLG"] = rp[f"{kk}_PLG"]
         L.append("\\midrule\n\\multicolumn{%d}{l}{\\emph{%s}: $\\bar\\beta=%.2f\\pm%.2f$, leading direction $%.0f$ percent, clean accuracy $%.3f$} \\\\"
                  % (len(cols) + 1, nm, st["beta_mean"], st["beta_std"], 100 * st["rank1_mean"], S[key]["probe_acc_clean_eval_groups"]))
         for snr in [0, 10]:
@@ -107,8 +128,12 @@ def main():
         for snr in ([0, 10] if key.startswith("ag_news_bert") else []):
             L.append(f"accuracy, {snr}~dB & " + " & ".join(cs(g(R[snr], c, "acc")) for c in cols) + " \\\\")
     L.append("\\bottomrule\n\\end{tabular}\n\\end{table*}\n")
-    OUT.write_text("\n".join(L) + "\n")
-    print("wrote", OUT)
+    body = "\n".join(L) + "\n"
+    src = MAIN.read_text()
+    i = src.index(BEGIN); i = src.index("\n", i) + 1
+    j = src.index(END)
+    MAIN.write_text(src[:i] + body + src[j:])
+    print("wrote tables into", MAIN.name)
 
 
 if __name__ == "__main__":

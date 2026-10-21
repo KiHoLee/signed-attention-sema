@@ -33,6 +33,7 @@ RUNS["gramsc_U4_d64_s1_lam"] = dict(kind="sc", U=4, d=64, seed=1, lam=0.1)
 RUNS["gramsc_U4_d64_s1_soft"] = dict(kind="sc", U=4, d=64, seed=1, softmax=True)
 RUNS["gramsc_U4_d256_s1"] = dict(kind="sc", U=4, d=256, seed=1)
 RUNS["att_U4_d64_s1"] = dict(kind="att", U=4, d=64, seed=1)
+RUNS["att_U4_d64_s1_long"] = dict(kind="att", U=4, d=64, seed=1, iters=2)   # reviewer check: twice the training steps
 RUNS["gramsc_U4_d64_s1_h"] = dict(kind="sc", U=4, d=64, seed=1, use_h=True)          # gain-conditioned variant
 RUNS["gramsc_U4_d64_s1_sgn"] = dict(kind="sc", U=4, d=64, seed=1, profile="mixed_signed")  # signed-coefficient training
 RUNS["gramsc_U4_d64_s1_rho"] = dict(kind="sc", U=4, d=64, seed=1, use_rho=True, K=1000)       # SC-rho: long-term noise estimate input
@@ -41,7 +42,7 @@ RUNS["gramsc_U4_d64_s1_rho"] = dict(kind="sc", U=4, d=64, seed=1, use_rho=True, 
 def train_one(name):
     r = RUNS[name]
     U, d, seed = r["U"], r["d"], r["seed"]
-    iters = 60 if QUICK else C["iters"]
+    iters = 60 if QUICK else C["iters"] * r.get("iters", 1)
     if r["kind"] == "sc":
         model = L.GramSC(U, C["hidden"], softmax=r.get("softmax", False),
                          feat=C["feat"], use_h=r.get("use_h", C["use_h"]),

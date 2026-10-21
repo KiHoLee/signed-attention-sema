@@ -47,6 +47,7 @@ STY = {
     "ATT":    ("Attention receiver",   "#d35400", "p", "--"),
     "TLC":    ("TLC",                  "#8e44ad", "P", "--"),
     "LMMSE":  ("Genie-aided LMMSE",       "#16a085", "v", "-."),
+    "PLG":    ("Plug-in LMMSE",        "#1b4f72", "*", "-"),
     "MOM":    ("Moment LMMSE",         "#0e6655", "<", ":"),
     "LMMSEe": ("Empirical LMMSE", "#1abc9c", ">", "-."),
     "SR":     ("SR",                   "#2c5fa8", "s", "--"),
@@ -58,7 +59,7 @@ STY = {
     "cf_oma":   ("OMA, closed form",   "#7f8c8d", "", ":"),
     "cf_omal":  ("OMA + LMMSE, closed form", "#566573", "", "-."),
 }
-ORDER = ["SC", "SCrho", "SCsoft", "ATT", "TLC", "TLCg", "LMMSE", "LMMSEe", "MOM", "SR", "MF", "OMA", "OMAL",
+ORDER = ["SC", "SCrho", "SCsoft", "ATT", "TLC", "TLCg", "LMMSE", "PLG", "LMMSEe", "MOM", "SR", "MF", "OMA", "OMAL",
          "cf_lmmse", "cf_sr", "cf_oma", "cf_omal"]
 
 
@@ -223,22 +224,30 @@ def fig_weights():
     save(fig, "fig_weights")
 
 
+def _overlay(ax, metric, xkey, path, pairs):
+    """Adds schemes computed by a separate script (same model, same grid) to an axis."""
+    if not path.exists():
+        return
+    rv = rows(path); xv = col(rv, xkey)
+    for k, src in pairs:
+        if f"{metric}_{src}" not in rv[0] and f"cos_{src}" not in rv[0]:
+            continue
+        y = col(rv, f"{metric}_{src}") if metric == "ser" else 1 - col(rv, f"cos_{src}")
+        plot(ax, xv, floor(y, 1e-6) if metric == "ser" else y, k, ax.semilogy)
+
+
 def fig_snr(metric="ser"):
     rs = rows("snr_sweep_b0.64.csv")
     snr = col(rs, "snr")
     fig, ax = plt.subplots()
-    keys = ["SC", "SCsoft", "ATT", "TLC", "LMMSE", "MOM", "SR", "MF", "OMA", "OMAL"]
+    keys = ["SC", "SCsoft", "ATT", "TLC", "LMMSE", "SR", "MF", "OMA", "OMAL"]
     for k in keys:
         if f"{metric}_{k}" not in rs[0]:
             continue
         y = col(rs, f"{metric}_{k}") if metric == "ser" else 1 - col(rs, f"cos_{k}")
         plot(ax, snr, floor(y, 1e-6) if metric == "ser" else y, k, ax.semilogy)
-    vf = DATA / "variants_floor" / "snr_b0.64.csv"
-    if vf.exists():   # SC-rho and TLC-g from the floor study (code/exp_floor_variants.py)
-        rv = rows(vf); sv = col(rv, "snr")
-        for k, src in [("SCrho", "SCrho1000"), ("TLCg", "TLCg")]:
-            y = col(rv, f"{metric}_{src}") if metric == "ser" else 1 - col(rv, f"cos_{src}")
-            plot(ax, sv, floor(y, 1e-6) if metric == "ser" else y, k, ax.semilogy)
+    _overlay(ax, metric, "snr", DATA / "variants_floor" / "snr_b0.64.csv", [("TLCg", "TLCg")])      # code/exp_floor_variants.py
+    _overlay(ax, metric, "snr", DATA / "plugin" / "snr_b0.64.csv", [("PLG", "PLG")])                 # code/exp_plugin.py
     ax.set_xlabel("per-user SNR (dB)")
     ax.set_ylabel("SER" if metric == "ser" else "cosine distortion $1-\\cos$")
     ax.set_xlim(-6, 24)
@@ -251,18 +260,15 @@ def fig_beta(snr=0, metric="ser"):
     rs = rows(f"beta_sweep_{snr}dB.csv")
     beta = col(rs, "beta")
     fig, ax = plt.subplots()
-    keys = ["SC", "SCsoft", "ATT", "TLC", "LMMSE", "MOM", "SR", "MF", "OMA", "OMAL"]
+    keys = ["SC", "SCsoft", "ATT", "TLC", "LMMSE", "SR", "MF", "OMA", "OMAL"]
     for k in keys:
         if f"{metric}_{k}" not in rs[0]:
             continue
         y = col(rs, f"{metric}_{k}") if metric == "ser" else 1 - col(rs, f"cos_{k}")
         plot(ax, beta, floor(y, 1e-6) if metric == "ser" else y, k, ax.semilogy, markevery=2)
-    vf = DATA / "variants_floor" / "beta_0dB.csv"
-    if vf.exists() and snr == 0:
-        rv = rows(vf); bv = col(rv, "beta")
-        for k, src in [("SCrho", "SCrho1000"), ("TLCg", "TLCg")]:
-            y = col(rv, f"{metric}_{src}") if metric == "ser" else 1 - col(rv, f"cos_{src}")
-            plot(ax, bv, floor(y, 1e-6) if metric == "ser" else y, k, ax.semilogy)
+    if snr == 0:
+        _overlay(ax, metric, "beta", DATA / "variants_floor" / "beta_0dB.csv", [("TLCg", "TLCg")])
+        _overlay(ax, metric, "beta", DATA / "plugin" / "beta_0dB.csv", [("PLG", "PLG")])
     ax.set_xlabel("similarity $\\beta$")
     ax.set_ylabel("SER" if metric == "ser" else "cosine distortion $1-\\cos$")
     ax.set_xlim(0, 0.9)
@@ -319,7 +325,7 @@ def fig_real(metric="ser"):
     fig, ax = plt.subplots(figsize=(CW, H5))
     rect = dict(AXES_RECT_LEG); rect["top"] = 1 - 0.05 / H5; rect["bottom"] = 1.18 / H5
     fig.subplots_adjust(**rect)
-    keys = ["SC", "SCrho", "SCsoft", "ATT", "TLC", "TLCg", "LMMSEe", "LMMSE", "MOM", "SR", "MF", "OMA", "OMAL"]
+    keys = ["SC", "SCsoft", "ATT", "TLC", "TLCg", "LMMSEe", "LMMSE", "SR", "MF", "OMA", "OMAL"]
     for k in keys:
         if f"{metric}_{k}" not in rs[0]:
             continue
@@ -328,6 +334,10 @@ def fig_real(metric="ser"):
             plot(ax, snr, floor(y, 1e-6), k, ax.semilogy)
         else:
             plot(ax, snr, y, k)
+    pf = DATA / "plugin" / "real_ag_news_bert-base-uncased_snr.csv"
+    if pf.exists():
+        rp = rows(pf); sp = col(rp, "snr"); y = col(rp, f"{metric}_PLG")
+        plot(ax, sp, floor(y, 1e-6) if metric == "ser" else y, "PLG", ax.semilogy if metric == "ser" else None)
     ax.set_xlabel("per-user SNR (dB)")
     if metric == "ser":
         ax.set_ylabel("SER"); ax.set_ylim(1e-6, 1.5)

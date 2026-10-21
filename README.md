@@ -37,7 +37,9 @@ Simulation code, result data, and figures for
 | Text: Haar-mask floor, mismatch, complexity | `exp7_misc.py` | `haar_masks.csv`, `mismatch.csv`, `complexity.json` | |
 | Text: seed spread, decorrelation penalty | `exp9_seeds.py` | `seeds.csv` | |
 | Floor points of Figs. 5, 7, 8 at 10x blocks (merged into the base files) | `run_floor.sh`, `merge_floor.py` | `*_floor.csv` | |
-| SC-rho and TLC-g variants (overlays in Figs. 5-7) | `exp_train.py gramsc_U4_d64_s1_rho`, `exp_floor_variants.py snr` / `beta` | `variants_floor/*.csv`, `ckpt/gramsc_U4_d64_s1_rho.pt` | |
+| Plug-in LMMSE (overlays in Figs. 5-8, a column of Tables III-V) | `exp_plugin.py snr` / `beta` / `profiles` / `varmix` / `scaling` / `real` | `plugin/*.csv`, `plugin/*.json` |
+| Attention receiver with doubled training (Sec. VI-D) | `exp_train.py att_U4_d64_s1_long`, `exp_att_long.py` | `att_long.csv` |
+| SC-rho and TLC-g variants (TLC-g overlays in Figs. 5-8; SC-rho is not reported in the paper) | `exp_train.py gramsc_U4_d64_s1_rho`, `exp_floor_variants.py snr` / `beta` | `variants_floor/*.csv`, `ckpt/gramsc_U4_d64_s1_rho.pt` | |
 | Text: receiver design study | `exp_variants.py` | `variants*.json` | |
 | Trained receivers | `exp_train.py` | `ckpt/*.pt` | |
 
