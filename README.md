@@ -4,7 +4,7 @@ Simulation code, result data, and figures for
 
 > K.-H. Lee, H.-H. Choi, and J.-R. Lee, "Semantic Embedding Multiplexing
 > Gain via Matched Signatures and Signed User-Wise Attention," submitted to
-> *IEEE Transactions on Signal Processing*, 2026.
+> *IEEE Transactions on Wireless Communications*, 2026.
 
 ## Contents
 
